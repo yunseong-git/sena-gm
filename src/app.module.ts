@@ -12,6 +12,7 @@ import { HeroModule } from './hero/hero.module';
 import { DeckModule } from './deck/deck.module';
 import { AuthModule } from './auth/auth.module';
 import { GuildModule } from './guild/guild.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { GuildModule } from './guild/guild.module';
     DeckModule,
     AuthModule,
     GuildModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

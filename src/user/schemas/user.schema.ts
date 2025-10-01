@@ -1,10 +1,42 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { GuildRole } from 'src/guild/schemas/guild.schema';
+import { HeroType } from 'src/hero/schemas/hero.schema';
 
 // 유저의 역할을 정의하는 Enum. 확장성을 위해 배열로 관리합니다.
 export enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
+}
+
+@Schema({ _id: false })
+export class MyHero {
+  @Prop({ type: Types.ObjectId, ref: 'Heroes', required: true })
+  hero_Id: Types.ObjectId;
+
+  @Prop({ required: true, type: String })
+  name: string;
+
+  @Prop({ required: true, type: String, enum: HeroType })
+  type: string;
+
+  // Hero 콜렉션에는 없는 유저별 고유 정보 (0~12)
+  @Prop({ required: true, type: Number, default: 0 })
+  evolution: number;
+}
+
+const MyHeroSchema = SchemaFactory.createForClass(MyHero);
+
+@Schema({ _id: false })
+class UserGuildInfo { //굳이 export 안함.
+  @Prop({ type: Types.ObjectId, ref: 'Guilds' })
+  _id: Types.ObjectId;
+
+  @Prop()
+  name: string;
+
+  @Prop({ type: String, enum: GuildRole })
+  role: string;
 }
 
 //테스트용
@@ -13,22 +45,31 @@ export class TestUser {
   @Prop({ required: true, unique: true, type: String })
   nickname: string;
 
-  @Prop({ type: [String], enum: UserRole, default: [UserRole.USER] })
+  @Prop({ required: true, type: String, select: false })
+  password: string;
+
+  @Prop({ type: [String], enum: UserRole, default: [UserRole.USER], select: false })
   roles: [UserRole];
+
+  // 길드 정보를 하나의 객체로 묶어서 관리
+  @Prop({ type: UserGuildInfo, _id: false })
+  guild?: UserGuildInfo; // 길드가 없을 수 있으므로 optional
+
+  // 보유한 영웅정보
+  @Prop({ type: [MyHeroSchema], default: [] })
+  myHeroes: MyHero[];
+
+  @Prop({ select: false }) // 보안을 위해 조회 시 기본적으로 제외
+  currentHashedRefreshToken?: string;
 
   @Prop({ type: Date })
   lastLoginAt?: Date;
-
-  @Prop({ type: Types.ObjectId, ref: 'Guilds' })
-  guild_Id: string;
-
-  // 보유한 영웅
-  @Prop({ type: Types.ObjectId, ref: 'Heroes' })
-  myHeroes: [Types.ObjectId];
 }
 
 export type TestUserDocument = HydratedDocument<TestUser>;
 export const TestUserSchema = SchemaFactory.createForClass(TestUser);
+
+TestUserSchema.index({ 'myHeroes.type': 1 });
 
 /* 추후 실제 배포 용도
 @Schema({ timestamps: true, })

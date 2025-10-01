@@ -1,28 +1,33 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { UserService } from './user.service';
-import { CreateUserDto, UpdateMyHeroesDto } from './dto/user.dto';
+import { TestUserDocument } from './schemas/user.schema';
+import { User } from 'src/common/decorators/user.decorators';
+import { AddOrUpdateHeroesDto, UpdateHeroEvoDto } from './dto/myheroes.dto';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
-  @Post()
-  createUser(@Body() dto: CreateUserDto) {
-    return this.userService.createUser(dto);
+  @Get('my-heroes')
+  async getMyHeroes(@User() user: TestUserDocument) {
+    const heroes = await this.userService.getMyHeroes(user.id);
+    return {
+      message: `${user.nickname}님의 보유 영웅 목록입니다.`,
+      heroes: heroes,
+    };
   }
 
-  @Patch()
-  async updateUserHeroes(@Body() dto: UpdateMyHeroesDto) {
-    await this.userService.UpdateMyHeroes(dto);
+  @Patch('my-heroes')
+  async addOrUpdateHeroes(@User() user: TestUserDocument, @Body() dto: AddOrUpdateHeroesDto) {
+    await this.userService.addOrUpdateHeroes(user.id, dto);
+    return { message: '보유 영웅 정보가 성공적으로 업데이트되었습니다.' };
+  }
 
-    return { success: true }; // 성공 여부나 간단한 메시지 반환
+  @Patch('my-heroes-evo')
+  async updateHeroEvolution(@User() user: TestUserDocument, @Body() dto: UpdateHeroEvoDto) {
+    await this.userService.updateHeroEvolution(user.id, dto);
+    return { message: '영웅 초월 정보가 업데이트되었습니다.' };
   }
 }
