@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { MyHero, TestUser, TestUserDocument } from './schemas/user.schema';
 import { Model, Types } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 import { AddOrUpdateHeroesDto, UpdateHeroEvoDto } from './dto/myheroes.dto';
 
 @Injectable()
@@ -10,6 +11,53 @@ export class UserService {
   constructor(
     @InjectModel(TestUser.name) private userModel: Model<TestUserDocument>,
   ) { }
+
+  /** 리프레시 토큰 저장 (해싱 적용) */
+  async saveRefreshToken(userId: string, refreshToken: string): Promise<void> {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.userModel.updateOne(
+      { _id: userId },
+      { $set: { currentRefreshToken: hashedRefreshToken } },
+    );
+  }
+
+
+  /** 유저 검증 (ID/PW) */
+  async validateUser(nickname: string, password: string): Promise<TestUserDocument | null> {
+    const user = await this.userModel.findOne({ nickname });
+
+    // 비밀번호 해싱을 사용하지 않으므로 직접 비교
+    if (user && user.password === password) {
+      return user;
+    }
+    return null;
+  }
+
+
+  /** 리프레시 토큰 검증 및 유저 반환
+   * 모든 과정 통과시 user객체 반환
+   * 유저없거나, 토큰불일치 시 null
+   */
+  async getUserIfRefreshTokenMatches(userId: string, refreshToken: string): Promise<TestUserDocument | null> {
+    //유저 검색
+    const user = await this.userModel.findById(userId).select('+refreshToken');
+    if (!user || !user.refreshToken) {
+      return null;
+    }
+
+    // 클라이언트가 보낸 토큰과 DB에 저장된 토큰을 비교
+    const isMatches = await bcrypt.compare(refreshToken, user.refreshToken);
+
+    if (isMatches) {
+      return user;
+    } else {
+      return null;
+    }
+  }
+
+  async findUserById(userId: string): Promise<TestUserDocument | null> {
+    return await this.userModel.findById(userId);
+  }
 
   /**
     * @description 사용자의 보유 영웅 목록을 가져옵니다.

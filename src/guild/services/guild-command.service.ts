@@ -3,7 +3,6 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
-  Inject,
 } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection, Types } from 'mongoose';
@@ -14,21 +13,26 @@ import { nanoid } from 'nanoid';
 import { GuildQueryService } from 'src/guild/services/guild-query.service';
 import { guildCode } from '../controllers/guild-public.controller';
 import { simpleResponse } from 'src/common/types/response.type';
-import Redis from 'ioredis';
-import { REDIS_CLIENT } from 'src/redis/redis.module';
+import { RedisService } from 'src/redis/redis.service';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class GuildCommandService {
   constructor(
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    //models
     @InjectModel(Guild.name) private guildModel: Model<GuildDocument>,
     @InjectModel(TestUser.name) private userModel: Model<TestUserDocument>,
+    //transaction을 위한 mongoose-connection
     @InjectConnection() private readonly connection: Connection,
+    //inner-service
     private readonly guildQueryService: GuildQueryService,
+    //outer-service
+    private readonly redisService: RedisService,
+    private readonly authService: AuthService,
   ) { }
 
-  /** 길드 생성 (+refresh)*/
-  async createGuild(createGuildDto: CreateGuildDto, user: TestUserDocument): Promise<simpleResponse> {
+  /** 길드 생성 (+reiu)*/
+  async createGuild(createGuildDto: CreateGuildDto, user: TestUserDocument) {
     //************ fail-fast ************//
     // 1. 유저 사전 검증
     if (user.guild) {
@@ -68,9 +72,11 @@ export class GuildCommandService {
 
       await session.commitTransaction();
 
-      //************ return ************//
+      //3. 토큰 재발급
+      const newAccessToken = await this.authService.issueTokens(user);
 
-      return { success: true }
+      //4. return
+      return { success: true, accessToken: newAccessToken };
     } catch (error) {
       await session.abortTransaction(); //에러 시 재시작 없이 트랜잭션 종료
       throw error;

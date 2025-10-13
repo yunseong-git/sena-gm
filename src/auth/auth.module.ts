@@ -2,13 +2,14 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
-import { JwtBlacklistGuard } from './guards/auth.guard';
+import { JwtBlacklistGuard } from './guards/jwt-blacklist.guard';
 import { TestUser, TestUserSchema } from 'src/user/schemas/user.schema';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RedisModule } from 'src/redis/redis.module';
+import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { RedisModule } from 'src/redis/redis.module';
   providers: [
     AuthService,
     JwtStrategy,
+    JwtRefreshStrategy,
     JwtBlacklistGuard
   ],
   exports: [AuthService, JwtModule],

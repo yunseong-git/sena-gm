@@ -8,7 +8,7 @@ import { User } from 'src/common/decorators/user.decorators';
 import { TestUserDocument } from 'src/user/schemas/user.schema';
 import { guildCode } from './guild-public.controller';
 import { simpleResponse } from 'src/common/types/response.type';
-import { JwtBlacklistGuard } from 'src/auth/guards/auth.guard';
+import { JwtBlacklistGuard } from 'src/auth/guards/jwt-blacklist.guard';
 
 @Controller('guild')
 @UseGuards(JwtBlacklistGuard, GuildGuard) // 컨트롤러 전체에 BlackListGuard와 GuildGuard 적용

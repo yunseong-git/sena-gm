@@ -60,7 +60,7 @@ export class TestUser {
   myHeroes: MyHero[];
 
   @Prop({ select: false }) // 보안을 위해 조회 시 기본적으로 제외
-  currentHashedRefreshToken?: string;
+  refreshToken?: string;
 
   @Prop({ type: Date })
   lastLoginAt?: Date;

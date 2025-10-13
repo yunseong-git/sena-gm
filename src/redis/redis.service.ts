@@ -14,9 +14,19 @@ export class RedisService {
   async blacklistUser(userId: Types.ObjectId | string, ttl: number): Promise<void> {
     // Redis 키는 'prefix:id' 형태로 만드는 것이 일반적(ex: blacklist:6528d...)
     const key = `blacklist:${userId.toString()}`;
-    const value = 'blacklisted'; // 값은 중요하지 않지만, 추적을 위해 의미있는 값을 씁니다.
+    const value = 'blacklisted'; // 값은 중요하지 않지만, 추적을 위해 의미있는 값을 씀
 
-    // 'EX'는 만료 시간을 '초' 단위로 설정하라는 명령어입니다.
+    //초단위
     await this.redis.set(key, value, 'EX', ttl);
   }
+
+  /**
+ * 특정 유저를 블랙리스트에서 제거
+ * @param userId 블랙리스트에서 제거할 유저의 ID
+ */
+  async removeFromBlacklist(userId: Types.ObjectId | string): Promise<void> {
+    const key = `blacklist:${userId.toString()}`;
+    await this.redis.del(key);
+  }
+
 }

@@ -42,4 +42,5 @@ NestJS는 @nestjs/passport에 내장된 범용 가드 대신 우리가 만든 Au
 (만약 직접 만든 AuthGuard 클래스를 등록하지 않았다면 내장된 범용 가드를 사용함)
 
 컨트롤러 파일 상단에 import { AuthGuard } from 'src/auth/guards/auth.guard'; 라고 명시적으로 파일 import를 잘해야 함.
+-> 걍 이름 바꿔서 해결함
 */
