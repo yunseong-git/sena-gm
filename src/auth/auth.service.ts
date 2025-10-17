@@ -3,13 +3,13 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
-import { TestUser, TestUserDocument } from 'src/user/schemas/user.schema';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+import { TestUser, TestUserDocument } from '#src/user/schemas/user.schema.js';
+import { RegisterDto } from './dto/register.dto.js';
+import { LoginDto } from './dto/login.dto.js';
 import { ConfigService } from '@nestjs/config';
-import { UserService } from 'src/user/user.service';
-import { RedisService } from 'src/redis/redis.service';
-import { AccessToken, Tokens } from './types/token-response.type';
+import { UserService } from '#src/user/user.service.js';
+import { RedisService } from '#src/redis/redis.service.js';
+import { AccessToken, Tokens } from './types/token-response.type.js';
 
 @Injectable()
 export class AuthService {
@@ -93,7 +93,7 @@ export class AuthService {
     return user;
   }
 
-  /**refreshToken 검증 후 access_token 재발급 */
+  /**refreshToken 검증 후 access_token 재발급(클라이언트 주도용) */
   async Refreshing(user_Id: string, refreshToken: string): Promise<AccessToken> {
     const user = await this.userService.getUserIfRefreshTokenMatches(user_Id, refreshToken);
     if (!user) {
@@ -106,11 +106,14 @@ export class AuthService {
 
   async logout(user_Id: string): Promise<void> {
     // 액세스 토큰의 만료 시간과 동일하게 설정하여, 해당 토큰의 남은 수명 동안만 차단
-    const ttl = 900; // 15분
-    await this.redisService.blacklistUser(user_Id, ttl);
+    await this.redisService.blacklistUser(user_Id);
   }
 
-  async issueTokens(user: TestUserDocument) {
+  /**유저 확인후 토큰 재발급(서버 주도용) */
+  async issueTokens(old_user: TestUserDocument) {
+    const user = await this.userModel.findById(old_user._id);
+    if (!user) throw new UnauthorizedException('유저를 찾을 수 없습니다.');
+
     const accessToken = await this.generateAccessToken(user);
     const refreshToken = await this.activateRefreshToken(user); // 이 메서드는 내부적으로 DB 저장까지 포함
 

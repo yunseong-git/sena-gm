@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { GuildRole } from '../schemas/guild.schema';
+import { GuildRole } from '../schemas/guild.schema.js';
 
 // 데코레이터에서 사용할 메타데이터의 '키'를 상수로 정의 (오타 방지)
 export const GUILD_ROLES_KEY = 'guild_roles';

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { BattlelogService } from './battlelog.service';
-import { BattlelogController } from './battlelog.controller';
+import { BattlelogService } from './battlelog.service.js';
+import { BattlelogController } from './battlelog.controller.js';
 import { MongooseModule } from '@nestjs/mongoose';
-import { BattleLogSchema } from './schemas/battlelog.schema';
+import { BattleLogSchema } from './schemas/battlelog.schema.js';
 
 @Module({
   imports: [

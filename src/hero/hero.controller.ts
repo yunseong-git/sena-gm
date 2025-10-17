@@ -7,8 +7,8 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { HeroService } from './hero.service';
-import { CreateHeroDto } from './dto/create-hero.dto';
+import { HeroService } from './hero.service.js';
+import { CreateHeroDto } from './dto/create-hero.dto.js';
 
 @Controller('hero')
 export class HeroController {

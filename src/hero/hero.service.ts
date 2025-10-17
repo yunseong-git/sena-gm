@@ -1,7 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { CreateHeroDto } from './dto/create-hero.dto';
-import { heroesData } from './schemas/hero.data';
-import { Hero, HeroDocument } from './schemas/hero.schema';
+import { CreateHeroDto } from './dto/create-hero.dto.js';
+import { heroesData } from './schemas/hero.data.js';
+import { Hero, HeroDocument } from './schemas/hero.schema.js';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 

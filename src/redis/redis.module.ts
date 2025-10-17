@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config'; // ConfigService를 임포트합니다.
-import { Redis } from 'ioredis';
-import { RedisService } from './redis.service';
-
-export const REDIS_CLIENT = 'REDIS_CLIENT';
+import * as ioredis from 'ioredis';
+import { RedisService } from './redis.service.js';
+import { REDIS_CLIENT } from './redis.constants.js';
 
 @Module({
   providers: [
@@ -18,12 +17,11 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
         if (!redisUrl) {
           throw new Error('UPSTASH_REDIS_URL 환경 변수가 설정되지 않았습니다.');
         }
-
-        return new Redis(redisUrl);
+        return new ioredis.Redis(redisUrl);
       },
     },
     RedisService,
   ],
-  exports: [REDIS_CLIENT],
+  exports: [RedisService],
 })
 export class RedisModule { }

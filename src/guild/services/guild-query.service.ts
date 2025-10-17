@@ -4,10 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Guild, GuildDocument, GuildRole } from 'src/guild/schemas/guild.schema';
-import { guildCode } from '../controllers/guild-public.controller';
-import { simpleGuildInfo } from '../types/guild.type';
+import { Model, Types } from 'mongoose';
+import { Guild, GuildDocument, GuildRole } from '#src/guild/schemas/guild.schema.js';
+import { guildCode } from '../controllers/guild-public.controller.js';
+import { simpleGuildInfo } from '../types/guild.type.js';
 
 @Injectable()
 export class GuildQueryService {
@@ -25,7 +25,7 @@ export class GuildQueryService {
   ////////////////////////////////guild-code////////////////////////////////
 
   /**길드 코드 조회 로직(길드 코드 확인용) */
-  async findGuildCode(guild_Id: string): Promise<guildCode> {
+  async findGuildCode(guild_Id: Types.ObjectId): Promise<guildCode> {
     const result = await this.guildModel
       .findById(guild_Id)
       .select('code -_id')
@@ -53,24 +53,23 @@ export class GuildQueryService {
     return guild;
   }
 
-  /**타겟이 길드원인지, 길드원이 아니면 조회오류 */
-  async targetIsMember(guild_Id: string, target_Id: string) {
-    const targetIsMember = await this.guildModel.exists({ _id: guild_Id, 'members.user_Id': target_Id });
-    if (!targetIsMember) {
-      throw new NotFoundException('대상이 길드에 소속되어 있지 않습니다.');
-    }
+  /**타겟이 길드원이면 true, 아니면 false */
+  async targetIsMember(guild_Id: Types.ObjectId, target_Id: Types.ObjectId): Promise<boolean> {
+    const result = await this.guildModel.exists({
+      _id: guild_Id,
+      'members.user_Id': target_Id
+    });
+    return !!result;
   }
 
-  /**타겟이 길드마스터인지, 길드마스터면 권한오류 */
-  async targetIsMaster(guild_Id: string, target_Id: string): Promise<void> {
-    const targetIsMaster = await this.guildModel.exists({
+  /** 타겟이 길드마스터면 true, 아니면 false */
+  async targetIsMaster(guild_Id: Types.ObjectId, target_Id: Types.ObjectId): Promise<boolean> {
+    const result = await this.guildModel.exists({
       _id: guild_Id,
       members: {
         $elemMatch: { user_Id: target_Id, role: GuildRole.MASTER }
       }
     });
-    if (targetIsMaster) {
-      throw new BadRequestException('권한이 없습니다.');
-    }
+    return !!result;
   }
 }

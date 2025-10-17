@@ -2,17 +2,18 @@ import { Module } from '@nestjs/common';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AdventwarModule } from './adventwar/adventwar.module.js';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
+import { AuthModule } from './auth/auth.module.js';
+import { DeckModule } from './deck/deck.module.js';
+import { GuildModule } from './guild/guild.module.js';
+import { GuildwarModule } from './guildwar/guildwar.module.js';
+import { HeroModule } from './hero/hero.module.js';
+import { PickModule } from './pick/pick.module.js';
+import { RedisModule } from './redis/redis.module.js';
+import { UserModule } from './user/user.module.js';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UserModule } from './user/user.module';
-import { GuildwarModule } from './guildwar/guildwar.module';
-import { PickModule } from './pick/pick.module';
-import { HeroModule } from './hero/hero.module';
-import { DeckModule } from './deck/deck.module';
-import { AuthModule } from './auth/auth.module';
-import { GuildModule } from './guild/guild.module';
-import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -20,7 +21,6 @@ import { RedisModule } from './redis/redis.module';
     ConfigModule.forRoot({
       isGlobal: true, // 앱 전체에서 ConfigService를 사용할 수 있도록 설정
     }),
-
     // 2. MongooseModule을 비동기 방식으로 설정
     MongooseModule.forRootAsync({
       imports: [ConfigModule], // MongooseModule에서 ConfigModule을 사용하도록 주입
@@ -39,6 +39,7 @@ import { RedisModule } from './redis/redis.module';
     AuthModule,
     GuildModule,
     RedisModule,
+    AdventwarModule,
   ],
   controllers: [AppController],
   providers: [AppService],

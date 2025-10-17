@@ -1,7 +1,8 @@
+import { REDIS_CLIENT } from '#src/redis/redis.constants.js';
 import { Injectable, Inject, UnauthorizedException, ExecutionContext } from '@nestjs/common';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import { Redis } from 'ioredis';
-import { REDIS_CLIENT } from 'src/redis/redis.module';
+
 
 @Injectable()
 export class JwtBlacklistGuard extends PassportAuthGuard('jwt') {
@@ -41,6 +42,6 @@ NestJS는 AuthGuard라는 이름(토큰)을 가진 Provider를 찾는다.
 NestJS는 @nestjs/passport에 내장된 범용 가드 대신 우리가 만든 AuthGuard를 사용하게 된다.
 (만약 직접 만든 AuthGuard 클래스를 등록하지 않았다면 내장된 범용 가드를 사용함)
 
-컨트롤러 파일 상단에 import { AuthGuard } from 'src/auth/guards/auth.guard'; 라고 명시적으로 파일 import를 잘해야 함.
+컨트롤러 파일 상단에 import { AuthGuard } from '#src/auth/guards/auth.guard'; 라고 명시적으로 파일 import를 잘해야 함.
 -> 걍 이름 바꿔서 해결함
 */

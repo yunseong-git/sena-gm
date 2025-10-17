@@ -1,12 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Delete, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { User } from 'src/common/decorators/user.decorators';
-import { TestUserDocument } from 'src/user/schemas/user.schema';
+import { AuthService } from './auth.service.js';
+import { RegisterDto } from './dto/register.dto.js';
+import { LoginDto } from './dto/login.dto.js';
+import { User } from '#src/common/decorators/user.decorators.js';
+import { TestUserDocument } from '#src/user/schemas/user.schema.js';
 import { AuthGuard } from '@nestjs/passport';
-import { RefreshTokenPayload } from './dto/payload.dto';
-import { Tokens, AccessToken } from './types/token-response.type';
+import { RefreshTokenPayload } from './dto/payload.dto.js';
+import { Tokens, AccessToken } from './types/token-response.type.js';
 
 @Controller('auth')
 export class AuthController {

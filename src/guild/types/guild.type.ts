@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { GuildRole } from "../schemas/guild.schema";
+import { GuildRole } from "../schemas/guild.schema.js";
 
 export type simpleGuildInfo = {
   _id: Types.ObjectId;

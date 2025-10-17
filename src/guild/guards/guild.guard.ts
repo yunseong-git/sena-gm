@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { GUILD_ROLES_KEY } from '../decorators/guild-roles.decorator';
-import { GuildRole } from '../schemas/guild.schema';
+import { GUILD_ROLES_KEY } from '../decorators/guild-roles.decorator.js';
+import { GuildRole } from '../schemas/guild.schema.js';
 
 @Injectable()
 export class GuildGuard implements CanActivate {

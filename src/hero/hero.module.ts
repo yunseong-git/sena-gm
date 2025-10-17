@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { HeroService } from './hero.service';
-import { HeroController } from './hero.controller';
+import { HeroService } from './hero.service.js';
+import { HeroController } from './hero.controller.js';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Hero, HeroSchema } from './schemas/hero.schema';
+import { Hero, HeroSchema } from './schemas/hero.schema.js';
 
 @Module({
   imports: [

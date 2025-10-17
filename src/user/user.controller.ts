@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { UserService } from './user.service';
-import { TestUserDocument } from './schemas/user.schema';
-import { User } from 'src/common/decorators/user.decorators';
-import { AddOrUpdateHeroesDto, UpdateHeroEvoDto } from './dto/myheroes.dto';
+import { UserService } from './user.service.js';
+import { TestUserDocument } from './schemas/user.schema.js';
+import { User } from '#src/common/decorators/user.decorators.js';
+import { AddOrUpdateHeroesDto, UpdateHeroEvoDto } from './dto/myheroes.dto.js';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('user')

@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { GuildRole } from 'src/guild/schemas/guild.schema';
-import { HeroType } from 'src/hero/schemas/hero.schema';
+import { GuildRole } from '#src/guild/schemas/guild.schema.js';
+import { HeroType } from '#src/hero/schemas/hero.schema.js';
 
 // 유저의 역할을 정의하는 Enum. 확장성을 위해 배열로 관리합니다.
 export enum UserRole {
