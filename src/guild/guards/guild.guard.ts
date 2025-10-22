@@ -27,13 +27,13 @@ export class GuildGuard implements CanActivate {
     }
 
     // 4. 유저가 길드에 소속되어 있는지, 역할 정보가 있는지 확인
-    if (!user.guild_Id || !user.guild_role) {
+    if (!user.guild || !user.guild.role) {
       throw new ForbiddenException('길드에 소속되어 있지 않거나, 길드 역할이 없습니다.');
     }
 
     // 5. 이 API에 필요한 역할 중 하나라도 유저의 역할과 일치하는지 확인
     // @GuildRoles() 처럼 인자 없이 데코레이터만 사용하면, 길드 소속 여부만 체크하게 됨
-    if (requiredRoles.length > 0 && !requiredRoles.includes(user.guild_role)) {
+    if (requiredRoles.length > 0 && !requiredRoles.includes(user.guild.role)) {
       throw new ForbiddenException('이 작업을 수행할 권한이 없습니다.');
     }
 

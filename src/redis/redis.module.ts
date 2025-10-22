@@ -22,6 +22,6 @@ import { REDIS_CLIENT } from './redis.constants.js';
     },
     RedisService,
   ],
-  exports: [RedisService],
+  exports: [RedisService, REDIS_CLIENT],
 })
 export class RedisModule { }

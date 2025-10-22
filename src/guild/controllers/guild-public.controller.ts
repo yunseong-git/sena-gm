@@ -34,7 +34,7 @@ export class GuildPublicController {
    * @returns {Tokens} 최신 정보가 담긴 새로운 토큰 세트
    */
   @Post('join')
-  async joinGuild(@User() user: TestUserDocument, @Body() code: string,): Promise<Tokens> {
+  async joinGuild(@User() user: TestUserDocument, @Body('code') code: string,): Promise<Tokens> {
     return this.guildCommandService.joinGuild(code, user);
   }
 }

@@ -28,7 +28,7 @@ export class GuildQueryService {
   async findGuildCode(guild_Id: Types.ObjectId): Promise<guildCode> {
     const result = await this.guildModel
       .findById(guild_Id)
-      .select('code -_id')
+      .select('+code')
       .lean().exec();
 
     if (!result || !result.code) {

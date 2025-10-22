@@ -30,7 +30,7 @@ const MyHeroSchema = SchemaFactory.createForClass(MyHero);
 @Schema({ _id: false })
 class UserGuildInfo { //굳이 export 안함.
   @Prop({ type: Types.ObjectId, ref: 'Guilds' })
-  _id: Types.ObjectId;
+  guildId: Types.ObjectId;
 
   @Prop()
   name: string;

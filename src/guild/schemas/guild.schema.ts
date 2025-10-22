@@ -29,7 +29,7 @@ export class Guild {
   tag: number;
 
   //길드 초대 코드(unique+sparse: 필드가 선택적이지만 존재한다면 유니크)
-  @Prop(({ type: String, unique: true, sparse: true, select: false }))
+  @Prop({ type: String, unique: true, sparse: true, select: false })
   code?: string;
 
   // GuildMember 서브도큐먼트 배열로 모든 길드원 정보를 통합 관리
@@ -57,13 +57,15 @@ GuildSchema.pre(
 );
 
 // 2. 업데이트(update) 쿼리를 위한 pre-hook 
+/*
 GuildSchema.pre(
   ['updateOne', 'updateMany', 'findOneAndUpdate'],
   function (this: Query<GuildDocument, GuildDocument>, next) {
     this.where({ isDeleted: { $ne: true } });
+
     next();
   });
 
-
+*/
 //길드명 + tag 넘버 복합 인덱스
 GuildSchema.index({ name: 1, tag: 1 }, { unique: true }); 

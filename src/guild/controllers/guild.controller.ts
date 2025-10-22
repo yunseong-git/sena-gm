@@ -64,12 +64,17 @@ export class GuildController {
   @Patch('code') // PATCH /guilds/code
   @GuildRoles(GuildRole.MASTER, GuildRole.SUBMASTER)
   async generateCode(@User() user: TestUserDocument): Promise<guildCode> {
-    return this.guildCommandService.generateGuildCode(user.guild!._id);
+
+    console.log(`[CONTROLLER] User's payload from token: ${user}`);
+
+    return this.guildCommandService.generateGuildCode(user.guild!.guildId);
   }
 
   @Get('code') // GET /guilds/code
   @GuildRoles(GuildRole.MASTER, GuildRole.SUBMASTER)
   async findGuildCode(@User() user: TestUserDocument): Promise<guildCode> {
-    return this.guildQueryService.findGuildCode(user.guild!._id);
+
+
+    return this.guildQueryService.findGuildCode(user.guild!.guildId);
   }
 }
