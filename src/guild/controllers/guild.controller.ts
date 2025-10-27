@@ -1,80 +1,73 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { GuildQueryService } from '../services/guild-query.service.js';
 import { GuildCommandService } from '../services/guild-command.service.js';
 import { GuildGuard } from '../guards/guild.guard.js';
 import { GuildRoles } from '../decorators/guild-roles.decorator.js';
-import { GuildRole } from '../schemas/guild.schema.js';
+import { Guild, GuildRole } from '../schemas/guild.schema.js';
 import { User } from '#src/common/decorators/user.decorators.js';
-import { TestUserDocument } from '#src/user/schemas/user.schema.js';
+import { UserDocument } from '#src/user/schemas/user.schema.js';
 import { guildCode } from './guild-public.controller.js';
 import { simpleResponse } from '#src/common/types/response.type.js';
-import { JwtBlacklistGuard } from '#src/auth/guards/jwt-blacklist.guard.js';
+import { RefreshListGuard } from '#src/auth/guards/refresh-list.guard.js';
 import { ParseObjectIdPipe } from '#src/common/pipes/parse-object-id.pipe.js';
 import { Types } from 'mongoose';
-import { Tokens } from '#src/auth/types/token-response.type.js';
+import { Response } from 'express';
+import { AccessToken, Tokens } from '#src/auth/types/token-response.type.js';
 import { TargetIdDto } from '../dto/target-id.dto.js';
+import { CreateGuildDto } from '../dto/create-guild.dto.js';
+import { UserPayload } from '#src/auth/types/payload.type.js';
 
 @Controller('guild')
-@UseGuards(JwtBlacklistGuard, GuildGuard) // 컨트롤러 전체에 BlackListGuard와 GuildGuard 적용
+@UseGuards(RefreshListGuard, GuildGuard) // 컨트롤러 전체에 BlackListGuard와 GuildGuard 적용
 export class GuildController {
   constructor(
     private readonly guildQueryService: GuildQueryService,
     private readonly guildCommandService: GuildCommandService,
   ) { }
 
-  // ==================== 길드 관리 ====================
+  @Post('create')
+  @HttpCode(HttpStatus.OK)
+  async createGuild(@User() user: UserPayload, @Body() createGuildDto: CreateGuildDto, @Res({ passthrough: true }) res: Response): Promise<AccessToken> {
+    const { accessToken, refreshToken } = await this.guildCommandService.createGuild(createGuildDto, user);
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, // JavaScript에서 접근 불가
+      secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
+      sameSite: 'strict', // CSRF 방어
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7일 (밀리초 단위)
+    });
+    return { accessToken }
+  }
 
-  @Delete() // DELETE /guilds
-  @GuildRoles(GuildRole.MASTER)
-  async dismissGuild(@User() user: TestUserDocument): Promise<Tokens> {
-    return this.guildCommandService.dismissGuild(user);
+  @Post('join')
+  @HttpCode(HttpStatus.OK)
+  async joinGuild(@User() user: UserDocument, @Body('code') code: string, @Res({ passthrough: true }) res: Response): Promise<AccessToken> {
+    const { accessToken, refreshToken } = await this.guildCommandService.joinGuild(code, user);
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, // JavaScript에서 접근 불가
+      secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
+      sameSite: 'strict', // CSRF 방어
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7일 (밀리초 단위)
+    });
+    return { accessToken }
+  }
+
+  // ==================== 길드 조회 ====================
+  @Get('my')
+  async getMyGuild(@User() user: UserPayload) {
+    return this.guildQueryService.getMyGuild(user);
   }
 
   // ==================== 멤버 관리 ====================
-
-  @Post('kick') // POST /guilds/kick
-  @GuildRoles(GuildRole.MASTER, GuildRole.SUBMASTER)
+  @Post('leave')
   @HttpCode(HttpStatus.OK)
-  async kickMember(@User() user: TestUserDocument, @Body() dto: TargetIdDto,): Promise<simpleResponse> {
-    return this.guildCommandService.kickMember(user, dto.targetId);
-  }
-
-  @Post('leave') // POST /guilds/leave
-  @HttpCode(HttpStatus.OK)
-  async leaveGuild(@User() user: TestUserDocument): Promise<Tokens> {
-    return this.guildCommandService.leaveGuild(user);
-  }
-
-  // ==================== 역할 관리 ====================
-
-  @Post('master/transfer') // POST /guilds/master/transfer
-  @GuildRoles(GuildRole.MASTER)
-  async transferMaster(@User() user: TestUserDocument, @Body() dto: TargetIdDto,): Promise<Tokens> {
-    return this.guildCommandService.transferMaster(user, dto.targetId);
-  }
-
-  @Post('submaster') // POST /guilds/submaster
-  @GuildRoles(GuildRole.MASTER, GuildRole.SUBMASTER)
-  async setSubmaster(@User() user: TestUserDocument, @Body() dto: TargetIdDto,): Promise<Tokens | simpleResponse> {
-    return this.guildCommandService.setSubmaster(user, dto.targetId);
-  }
-
-  // ==================== 초대 코드 관리 ====================
-
-  @Patch('code') // PATCH /guilds/code
-  @GuildRoles(GuildRole.MASTER, GuildRole.SUBMASTER)
-  async generateCode(@User() user: TestUserDocument): Promise<guildCode> {
-
-    console.log(`[CONTROLLER] User's payload from token: ${user}`);
-
-    return this.guildCommandService.generateGuildCode(user.guild!.guildId);
-  }
-
-  @Get('code') // GET /guilds/code
-  @GuildRoles(GuildRole.MASTER, GuildRole.SUBMASTER)
-  async findGuildCode(@User() user: TestUserDocument): Promise<guildCode> {
-
-
-    return this.guildQueryService.findGuildCode(user.guild!.guildId);
+  async leaveGuild(@User() user: UserDocument, @Res({ passthrough: true }) res: Response): Promise<AccessToken> {
+    const { accessToken, refreshToken } = await this.guildCommandService.leaveGuild(user);
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, // JavaScript에서 접근 불가
+      secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
+      sameSite: 'strict', // CSRF 방어
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7일 (밀리초 단위)
+    });
+    return { accessToken }
   }
 }

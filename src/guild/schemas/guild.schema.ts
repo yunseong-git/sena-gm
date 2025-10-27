@@ -12,7 +12,7 @@ export enum GuildRole {
 //<SubDocument> 길드원 정보
 @Schema({ _id: false })
 export class GuildMember {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'TestUsers' })
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Users' })
   user_Id: Types.ObjectId;
 
   @Prop({ required: true, type: String, enum: GuildRole, default: GuildRole.MEMBER })
@@ -28,13 +28,18 @@ export class Guild {
   @Prop({ required: true, type: Number })
   tag: number;
 
+  @Prop({ type: String })
+  master: string;
+
+  @Prop({ type: String })
+  submaster: string;
+
+  @Prop({ type: [Types.ObjectId], default: [] })
+  members: Types.ObjectId[];
+
   //길드 초대 코드(unique+sparse: 필드가 선택적이지만 존재한다면 유니크)
   @Prop({ type: String, unique: true, sparse: true, select: false })
   code?: string;
-
-  // GuildMember 서브도큐먼트 배열로 모든 길드원 정보를 통합 관리
-  @Prop({ type: [GuildMemberSchema], default: [] })
-  members: GuildMember[];
 
   @Prop({ required: true, type: Boolean, default: false })
   isDeleted: boolean;
@@ -56,7 +61,9 @@ GuildSchema.pre(
   },
 );
 
-// 2. 업데이트(update) 쿼리를 위한 pre-hook 
+GuildSchema.index({ name: 1, tag: 1 }, { unique: true });
+
+// 2. 업데이트(update) 쿼리를 위한 pre-hook
 /*
 GuildSchema.pre(
   ['updateOne', 'updateMany', 'findOneAndUpdate'],
@@ -68,4 +75,4 @@ GuildSchema.pre(
 
 */
 //길드명 + tag 넘버 복합 인덱스
-GuildSchema.index({ name: 1, tag: 1 }, { unique: true }); 
+

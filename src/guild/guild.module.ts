@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { MongooseModule } from '@nestjs/mongoose';
 import { Guild, GuildSchema } from './schemas/guild.schema.js';
-import { TestUser, TestUserSchema } from '#src/user/schemas/user.schema.js';
+import { User, UserSchema } from '#src/user/schemas/user.schema.js';
 
 //services
 import { GuildCommandService } from './services/guild-command.service.js';
@@ -20,7 +20,7 @@ import { UserModule } from '#src/user/user.module.js';
   imports: [
     MongooseModule.forFeature([
       { name: Guild.name, schema: GuildSchema },
-      { name: TestUser.name, schema: TestUserSchema }
+      { name: User.name, schema: UserSchema }
     ]),
     RedisModule,
     AuthModule,

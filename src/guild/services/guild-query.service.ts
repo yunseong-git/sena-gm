@@ -15,6 +15,8 @@ export class GuildQueryService {
     @InjectModel(Guild.name) private guildModel: Model<GuildDocument>,
   ) { }
 
+
+  // ==================== 길드 조회 ====================
   /** 길드 일반정보 조회 로직(길드 멤버확인 등 일반적 데이터) */
   async findGuildById(guild_Id: string): Promise<GuildDocument> {
     const guild = await this.guildModel.findById(guild_Id).lean().exec();
@@ -22,7 +24,14 @@ export class GuildQueryService {
     return guild;
   }
 
-  ////////////////////////////////guild-code////////////////////////////////
+  /** 길드 일반정보 조회 로직(길드 멤버확인 등 일반적 데이터) */
+  async getMemberDetails(guild_Id: string): Promise<GuildDocument> {
+    const guild = await this.guildModel.findById(guild_Id).lean().exec();
+    if (!guild) throw new NotFoundException('길드를 찾을 수 없습니다.');
+    return guild;
+  }
+
+  // ==================== 길드 관리 ====================
 
   /**길드 코드 조회 로직(길드 코드 확인용) */
   async findGuildCode(guild_Id: Types.ObjectId): Promise<guildCode> {
@@ -54,7 +63,7 @@ export class GuildQueryService {
   }
 
   /**타겟이 길드원이면 true, 아니면 false */
-  async targetIsMember(guild_Id: Types.ObjectId, target_Id: Types.ObjectId): Promise<boolean> {
+  async targetIsMember(guild_Id: string, target_Id: string): Promise<boolean> {
     const result = await this.guildModel.exists({
       _id: guild_Id,
       'members.user_Id': target_Id

@@ -2,8 +2,8 @@ import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
-import { JwtBlacklistGuard } from './guards/jwt-blacklist.guard.js';
-import { TestUser, TestUserSchema } from '#src/user/schemas/user.schema.js';
+import { RefreshListGuard } from './guards/refresh-list.guard.js';
+import { User, UserSchema } from '#src/user/schemas/user.schema.js';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -15,7 +15,7 @@ import { UserModule } from '#src/user/user.module.js';
 @Module({
   imports: [
     //스키마
-    MongooseModule.forFeature([{ name: TestUser.name, schema: TestUserSchema }]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     //모듈
     RedisModule,
     UserModule,
@@ -35,8 +35,8 @@ import { UserModule } from '#src/user/user.module.js';
     AuthService,
     JwtStrategy,
     JwtRefreshStrategy,
-    JwtBlacklistGuard
+    RefreshListGuard
   ],
-  exports: [AuthService, JwtBlacklistGuard],
+  exports: [AuthService, RefreshListGuard],
 })
 export class AuthModule { }

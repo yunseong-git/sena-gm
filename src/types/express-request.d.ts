@@ -1,8 +1,8 @@
-import { TestUserDocument } from '#src/schemas/test-user.schema.js';
+import { UserDocument } from '#src/schemas/test-user.schema.js';
 
 declare module 'express' {
   interface Request {
-    user?: TestUserDocument;
+    user?: UserDocument;
   }
 }
 

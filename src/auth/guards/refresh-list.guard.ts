@@ -5,7 +5,7 @@ import { Redis } from 'ioredis';
 
 
 @Injectable()
-export class JwtBlacklistGuard extends PassportAuthGuard('jwt') {
+export class RefreshListGuard extends PassportAuthGuard('jwt') {
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {
     super();
   }

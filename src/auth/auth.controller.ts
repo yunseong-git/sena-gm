@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Delete, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Delete, HttpCode, HttpStatus, UseGuards, Res } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
-import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { User } from '#src/common/decorators/user.decorators.js';
-import { TestUserDocument } from '#src/user/schemas/user.schema.js';
+import { UserDocument } from '#src/user/schemas/user.schema.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RefreshTokenPayload } from './dto/payload.dto.js';
-import { Tokens, AccessToken } from './types/token-response.type.js';
+import { AccessToken } from './types/token-response.type.js';
+import { Response } from 'express';
+import { RefreshListGuard } from './guards/refresh-list.guard.js';
+import { CreateUserDto } from '#src/user/dto/user.dto.js';
 
 @Controller('auth')
 export class AuthController {
@@ -14,14 +16,23 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() dto: RegisterDto): Promise<TestUserDocument> {
-    return await this.authService.register(dto);
+  async register(@Body() dto: CreateUserDto) {
+    const createdUser = await this.authService.register(dto);
+    return createdUser;
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto): Promise<Tokens> {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<AccessToken> {
+    const { accessToken, refreshToken } = await this.authService.login(dto);
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, // JavaScript에서 접근 불가
+      secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
+      sameSite: 'strict', // CSRF 방어
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7일 (밀리초 단위)
+    });
+    return { accessToken }
   }
 
   @Patch('refresh')
@@ -32,9 +43,14 @@ export class AuthController {
   }
 
   @Delete('logout')
-  @UseGuards(AuthGuard('jwt'))
-  @HttpCode(HttpStatus.OK)
-  async logout(@User() user: TestUserDocument): Promise<void> {
-    return this.authService.logout(user._id.toString());
+  @UseGuards(RefreshListGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(@User() user: UserDocument, @Res({ passthrough: true }) res: Response): Promise<void> {
+    await this.authService.logout(user._id.toString());
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true!
+      sameSite: 'strict',
+    })
   }
 }

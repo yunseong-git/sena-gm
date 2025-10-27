@@ -1,5 +1,16 @@
+import { IsNotEmpty, IsString } from 'class-validator';
 export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  testId: string;
+
+  @IsString()
+  @IsNotEmpty()
   nickname: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password: string;
 }
 
 export class UpdateMyHeroesDto {
@@ -8,8 +19,8 @@ export class UpdateMyHeroesDto {
 }
 
 /*
-@Schema({ timestamps: true, collection: 'TestUsers' })
-export class TestUser {
+@Schema({ timestamps: true, collection: 'Users' })
+export class User {
   @Prop({ required: true, unique: true, type: String })
   nickname: string;
 
