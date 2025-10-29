@@ -1,5 +1,4 @@
-//길드 관리자용
-import { Controller, Post } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { GuildQueryService } from '../services/guild-query.service.js';
 import { GuildCommandService } from '../services/guild-command.service.js';
 
@@ -9,6 +8,4 @@ export class GuildDevController {
     private readonly guildQueryService: GuildQueryService,
     private readonly guildCommandService: GuildCommandService,
   ) { }
-
-
 }

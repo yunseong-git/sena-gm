@@ -5,7 +5,6 @@ import { User } from '#src/common/decorators/user.decorators.js';
 import { UserDocument } from '#src/user/schemas/user.schema.js';
 import { AuthGuard } from '@nestjs/passport';
 import { RefreshTokenPayload } from './dto/payload.dto.js';
-import { AccessToken } from './types/token-response.type.js';
 import { Response } from 'express';
 import { RefreshListGuard } from './guards/refresh-list.guard.js';
 import { CreateUserDto } from '#src/user/dto/user.dto.js';
@@ -23,23 +22,36 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<AccessToken> {
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken } = await this.authService.login(dto);
 
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true, // JavaScript에서 접근 불가
+      httpOnly: true,
       secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
       sameSite: 'strict', // CSRF 방어
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7일 (밀리초 단위)
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
     });
-    return { accessToken }
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
+      sameSite: 'strict', // CSRF 방어
+      maxAge: 1000 * 60 * 15, // 15분
+    });
   }
 
   @Patch('refresh')
   @UseGuards(AuthGuard('jwt-refresh'))
   @HttpCode(HttpStatus.OK)
-  async refreshTokens(@User() payload: RefreshTokenPayload): Promise<AccessToken> {
-    return this.authService.Refreshing(payload.sub, payload.refreshToken);
+  async refreshTokens(@User() payload: RefreshTokenPayload, @Res({ passthrough: true }) res: Response) {
+    const newAccessToken = this.authService.Refreshing(payload.sub, payload.refreshToken)
+
+    res.cookie('accessToken', newAccessToken, {
+      httpOnly: true,
+      secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
+      sameSite: 'strict', // CSRF 방어
+      maxAge: 1000 * 60 * 15, // 15분
+    });
   }
 
   @Delete('logout')

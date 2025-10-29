@@ -3,10 +3,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-
 import { User, UserDocument } from '#src/user/schemas/user.schema.js';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload, UserPayload } from '../types/payload.type.js';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -18,24 +18,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const key = configService.get<string>('JWT_SECRET');
     if (!key) throw new Error('JWT_SECRET is not defined')
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: key, // ConfigService를 통해 비밀 키 가져오기
+      jwtFromRequest: (req: Request) => req.cookies?.accessToken,
+      secretOrKey: key,
       ignoreExpiration: false,
     });
   }
 
-  /**
-     * JwtPayload(원본)를 받아 UserPayload(가공 후)를 반환
-     */
+  /**JwtPayload -> UserPayload */
   async validate(payload: JwtPayload): Promise<UserPayload> {
-
     return {
-      // payload.sub (string)를 'id' (ObjectId)로 변환
       id: new Types.ObjectId(payload.sub),
       nickname: payload.nickname,
       tag: payload.tag,
       userRole: payload.userRole,
-      // payload.guildId (string | null)를 (ObjectId | null)로 변환
       guildId: payload.guildId ? new Types.ObjectId(payload.guildId) : null,
       guildRole: payload.guildRole,
     };

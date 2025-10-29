@@ -10,6 +10,7 @@ import { UserService } from '#src/user/user.service.js';
 import { RedisService } from '#src/redis/redis.service.js';
 import { AccessToken, Tokens } from './types/token-response.type.js';
 import { CreateUserDto } from '#src/user/dto/user.dto.js';
+import { UserPayload } from './types/payload.type.js';
 
 @Injectable()
 export class AuthService {
@@ -108,12 +109,12 @@ export class AuthService {
   async logout(userId: string): Promise<void> {
     // 액세스 토큰의 만료 시간과 동일하게 설정하여, 해당 토큰의 남은 수명 동안만 차단
     await this.userService.removeRefreshToken(userId);
-    await this.redisService.blacklistUser(userId);
+    await this.redisService.setRefreshList(userId);
   }
 
   /**유저 확인후 토큰 재발급(서버 주도용) */
-  async issueTokens(old_user: UserDocument) {
-    const user = await this.userModel.findById(old_user._id);
+  async issueTokens(old_user: UserPayload) {
+    const user = await this.userModel.findById(old_user.id);
     if (!user) throw new UnauthorizedException('유저를 찾을 수 없습니다.');
 
     const accessToken = await this.generateAccessToken(user);

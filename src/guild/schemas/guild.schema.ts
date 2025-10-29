@@ -9,17 +9,6 @@ export enum GuildRole {
   MEMBER = 'member',
 }
 
-//<SubDocument> 길드원 정보
-@Schema({ _id: false })
-export class GuildMember {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Users' })
-  user_Id: Types.ObjectId;
-
-  @Prop({ required: true, type: String, enum: GuildRole, default: GuildRole.MEMBER })
-  role: string;
-}
-export const GuildMemberSchema = SchemaFactory.createForClass(GuildMember);
-
 @Schema({ timestamps: true, collection: 'Guilds' })
 export class Guild {
   @Prop({ required: true, type: String })
@@ -28,11 +17,11 @@ export class Guild {
   @Prop({ required: true, type: Number })
   tag: number;
 
-  @Prop({ type: String })
-  master: string;
+  @Prop({ type: Types.ObjectId })
+  master: Types.ObjectId;
 
-  @Prop({ type: String })
-  submaster: string;
+  @Prop({ type: Types.ObjectId })
+  submaster: Types.ObjectId;
 
   @Prop({ type: [Types.ObjectId], default: [] })
   members: Types.ObjectId[];

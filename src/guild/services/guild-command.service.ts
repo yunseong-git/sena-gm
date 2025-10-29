@@ -7,8 +7,8 @@ import { AuthService } from '#src/auth/auth.service.js';
 import { Tokens } from '#src/auth/types/token-response.type.js';
 import { simpleResponse } from '#src/common/types/response.type.js';
 import { RedisService } from '#src/redis/redis.service.js';
-import { User } from '#src/user/schemas/user.schema.js';
-import { guildCode } from '../controllers/guild-public.controller.js';
+import { User, UserDocument } from '#src/user/schemas/user.schema.js';
+import { guildCode } from '../types/guild.type.js';
 import { CreateGuildDto } from '../dto/create-guild.dto.js';
 import { Guild, GuildDocument, GuildRole } from '../schemas/guild.schema.js';
 import { GuildQueryService } from './guild-query.service.js';
@@ -19,7 +19,7 @@ export class GuildCommandService {
   constructor(
     //mongoose
     @InjectModel(Guild.name) private guildModel: mongoose.Model<GuildDocument>,
-    @InjectModel(User.name) private userModel: mongoose.Model<UserPayload>,
+    @InjectModel(User.name) private userModel: mongoose.Model<UserDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection, //for-transaction-session
 
     //inner-service
@@ -50,13 +50,13 @@ export class GuildCommandService {
       const createdGuild = new this.guildModel({
         name: createGuildDto.name,
         tag: randomTag,
-        members: [{ user_Id: user.sub, role: GuildRole.MASTER }],
+        members: [{ user_Id: user.id, role: GuildRole.MASTER }],
       });
       const savedGuild = await createdGuild.save({ session });
 
       // 2. 유저 도큐먼트에 반영
       await this.userModel.updateOne(
-        { _id: user.sub },
+        { _id: user.id },
         {
           $set: {
             guild: {
@@ -102,7 +102,7 @@ export class GuildCommandService {
     try {
       // 1. 유저 도큐먼트에 길드 정보 초기화
       await this.userModel.updateOne(
-        { _id: user.sub },
+        { _id: user.id },
         { $unset: { guild: 1 } },
         { session }
       );
@@ -150,10 +150,7 @@ export class GuildCommandService {
         { _id: guildToJoin._id },
         {
           $addToSet: {
-            members: {
-              user_Id: user.sub,
-              role: GuildRole.MEMBER
-            }
+            members: user.id
           }
         },
         { session }
@@ -161,7 +158,7 @@ export class GuildCommandService {
 
       //유저 도큐먼트에 반영
       await this.userModel.updateOne(
-        { _id: user.sub },
+        { _id: user.id },
         {
           $set: {
             guild: {
@@ -189,18 +186,30 @@ export class GuildCommandService {
 
   /** 길드원 추방 (+blacklist) */
   async kickMember(actor: UserPayload, target_Id: string): Promise<simpleResponse> {
-    const guild_Id = actor.guildId!
-    const actor_Id = actor.sub
-    const target = new mongoose.Types.ObjectId(target_Id);
-
+    const guildId = actor.guildId!
+    const target = new mongoose.Types.ObjectId(target_Id); //objectId로 변환
 
     //************ Fail-Fast ************//
-    if (actor.sub == target_Id) {
+    // 1. 자기 추방
+    if (actor.id.equals(target)) {
       throw new BadRequestException('자기 자신을 추방할 수 없습니다.');
     }
-    const targetIsMember = await this.guildQueryService.targetIsMember(actor.guildId, target); // ObjectId를 그대로 전달
+
+    const guildInfo = await this.guildModel.findById(guildId).select('master submaster members').lean().exec();
+
+    if (!guildInfo) {
+      throw new NotFoundException('길드를 찾을 수 없습니다.');
+    }
+
+    // 2. 대상이 멤버 배열에 있는지 확인
+    const targetIsMember = guildInfo.members.some(memberId => memberId.equals(target));
     if (!targetIsMember) {
       throw new BadRequestException('대상이 길드에 소속되어 있지 않습니다.');
+    }
+
+    // 3. 대상이 마스터인지 확인
+    if (guildInfo.master.equals(target)) {
+      throw new BadRequestException('길드마스터는 추방할 수 없습니다.');
     }
 
     //************ transaction-session ************//
@@ -208,20 +217,20 @@ export class GuildCommandService {
     session.startTransaction();
     try {
       await this.guildModel.updateOne(
-        { _id: guild_Id },
-        { $pull: { members: { user_Id: target } } }, // new Types.ObjectId() 변환 제거
+        { _id: guildId },
+        { $pull: { members: target } },
         { session }
       );
       await this.userModel.updateOne(
-        { _id: target }, // ObjectId를 그대로 사용
+        { _id: target },
         { $unset: { guild: 1 } },
         { session }
       );
       await session.commitTransaction();
 
       //************ stateless ************//
-      await this.generateGuildCode(actor.guildId);
-      await this.redisService.blacklistUser(target);
+      await this.generateGuildCode(guildId);
+      await this.redisService.setRefreshList(target);
 
       return { success: true };
     } catch (error) {
@@ -237,25 +246,25 @@ export class GuildCommandService {
   async leaveGuild(user: UserPayload): Promise<Tokens> {
     //************ Fail-Fast ************//
     // 1. 길마가 탈퇴하려함
-    if (user.guild!.role === GuildRole.MASTER) {
+    if (user.guildRole === GuildRole.MASTER) {
       throw new BadRequestException('길드 마스터는 길드를 탈퇴할 수 없습니다. 먼저 마스터를 위임해주세요.');
     }
 
     //************ transaction-session ************//
-    const guild_Id = user.guild!.guildId
+    const guildId = user.guildId!
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
       // 1. 길드 도큐먼트에서 멤버 삭제(updateOne - $pull)
       await this.guildModel.updateOne(
-        { _id: guild_Id },
-        { $pull: { members: { user_Id: user._id } } },
+        { _id: guildId },
+        { $pull: { members: user.id } },
         { session }
       );
 
       // 2. 유저 도큐먼트에 길드 정보 초기화
       await this.userModel.updateOne(
-        { _id: user._id },
+        { _id: user.id },
         { $unset: { guild: 1 } },
         { session }
       );
@@ -263,8 +272,7 @@ export class GuildCommandService {
       await session.commitTransaction();
 
       // 3. 길드 코드 재발행
-      await this.generateGuildCode(guild_Id)
-
+      await this.generateGuildCode(guildId)
       const tokens = await this.authService.issueTokens(user);
 
       //************ return ************//
@@ -281,16 +289,16 @@ export class GuildCommandService {
 
   /** 길드 마스터 위임 (target = blacklist, actor = 토큰 재발행)*/
   async transferMaster(actor: UserPayload, target_Id: string): Promise<Tokens> {
-    const guild_Id = actor.guild!.guildId
+    const guildId = actor.guildId!
     const target = new mongoose.Types.ObjectId(target_Id);
     //************ Fail-Fast ************//
     //1. 자기 위임
-    if (actor._id.equals(target)) {
+    if (actor.id.equals(target)) {
       throw new BadRequestException('자기 자신에게 마스터를 위임할 수 없습니다.');
     }
 
     //2. 타겟이 길드원 아님
-    const targetIsMember = await this.guildQueryService.targetIsMember(guild_Id, target);
+    const targetIsMember = await this.guildQueryService.targetIsMember(guildId, target);
     if (!targetIsMember) {
       throw new BadRequestException('대상이 길드에 소속되어 있지 않습니다.');
     }
@@ -299,26 +307,23 @@ export class GuildCommandService {
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
-      // 1. 기존 마스터(actor)를 멤버로 강등
+      // 1. Guild: master 필드 변경
       await this.guildModel.updateOne(
-        { _id: guild_Id, 'members.user_Id': actor._id }, { $set: { 'members.$.role': GuildRole.MEMBER } }, { session }
-      );
-      const updateResultactor = await this.userModel.updateOne(
-        { _id: actor._id }, { $set: { 'guild.role': GuildRole.MEMBER } }, { session }
+        { _id: guildId }, { $set: { master: target } }, { session }
       );
 
-      // 2. 새로운 마스터(target)로 승급
-      await this.guildModel.updateOne(
-        { _id: guild_Id, 'members.user_Id': target }, { $set: { 'members.$.role': GuildRole.MASTER } }, { session }
+      // 2. User: 각각 길드 역할 변경
+      await this.userModel.updateOne(
+        { _id: actor.id }, { $set: { 'guild.role': GuildRole.MEMBER } }, { session }
       );
-      const updateResulttarget = await this.userModel.updateOne(
+      await this.userModel.updateOne(
         { _id: target }, { $set: { 'guild.role': GuildRole.MASTER } }, { session }
       );
 
       await session.commitTransaction();
 
       //************ stateless ************//
-      await this.redisService.blacklistUser(target);
+      await this.redisService.setRefreshList(target);
       const tokens = await this.authService.issueTokens(actor);
 
       //************ return ************//
@@ -332,62 +337,67 @@ export class GuildCommandService {
     }
   }
 
-
   /** 길드 부마스터 위임 (분리된 로직) */
-  async setSubmaster(actor: UserPayload, target_Id: string): Promise<Tokens | simpleResponse> {
-    const guild_Id = actor.guild!.guildId
+  async setSubmaster(actor: UserPayload, target_Id: string) {
+    const guildId = actor.guildId!
     const target = new mongoose.Types.ObjectId(target_Id);
 
-    // --- 1. 공통 Fail-Fast 검증 ---
-    if (actor._id.equals(target)) {
+    //************ Fail-Fast ************//
+    //1. 자기 위임
+    if (actor.id.equals(target)) {
       throw new BadRequestException('자기 자신에게 부마스터를 위임할 수 없습니다.');
     }
-    const targetIsMember = await this.guildQueryService.targetIsMember(guild_Id, target);
+    const guildInfo = await this.guildModel.findById(guildId).select('master submaster members').lean().exec();
+
+    if (!guildInfo) {
+      throw new NotFoundException('길드를 찾을 수 없습니다.');
+    }
+
+    // 2. 대상이 멤버 배열에 있는지 확인
+    const targetIsMember = guildInfo.members.some(memberId => memberId.equals(target));
     if (!targetIsMember) {
       throw new BadRequestException('대상이 길드에 소속되어 있지 않습니다.');
     }
-    const targetIsMaster = await this.guildQueryService.targetIsMaster(guild_Id, target);
-    if (targetIsMaster) {
-      throw new BadRequestException('길드마스터는 부마스터로 위임할 수 없습니다.');
+
+    // 3. 대상이 마스터인지 확인
+    if (guildInfo.master.equals(target)) {
+      throw new BadRequestException('길드마스터는 추방할 수 없습니다.');
     }
 
-    // --- 2. 행위자의 역할에 따라 다른 헬퍼 함수 호출 ---
-    if (actor.guild!.role === GuildRole.MASTER) {
-      return this._handleSubmasterTransferByMaster(guild_Id, target);
-    } else if (actor.guild!.role === GuildRole.SUBMASTER) {
-      return this._handleSubmasterTransferBySubmaster(actor, target);
+    //************ call helper ************//
+    if (actor.guildRole === GuildRole.MASTER) {
+      return await this._handleSubmasterTransferByMaster(guildId, target, guildInfo.submaster);
+    } else if (actor.guildRole === GuildRole.SUBMASTER) {
+      return await this._handleSubmasterTransferBySubmaster(actor, target);
     } else {
-      throw new ForbiddenException('권한이 없습니다.'); // GuildGuard가 막아주겠지만, 방어 코드로 추가
+      throw new ForbiddenException('권한이 없습니다.');
     }
   }
 
   /** [Private] 마스터가 부마스터를 위임 */
-  private async _handleSubmasterTransferByMaster(guild_Id: mongoose.Types.ObjectId, target_Id: mongoose.Types.ObjectId): Promise<simpleResponse> {
-    const guild = await this.guildModel.findById(guild_Id);
-    if (!guild) throw new NotFoundException('길드를 찾을 수 없습니다.');
-    const currentSubmaster = guild.members.find(member => member.role === GuildRole.SUBMASTER);
+  private async _handleSubmasterTransferByMaster(guildId: mongoose.Types.ObjectId, target_Id: mongoose.Types.ObjectId, currentSubmaster: mongoose.Types.ObjectId | null | undefined) {
 
+    //************ transaction-session ************//
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
-      // 기존 부마스터가 있다면 멤버로 강등
+      // 1. Guild: submaster 변경
+      await this.guildModel.updateOne({ _id: guildId }, { $set: { submaster: target_Id } }, { session });
+
+      // 2. User: 기존 submaster 존재시 변경
       if (currentSubmaster) {
-        await this.guildModel.updateOne({ _id: guild_Id, 'members.user_Id': currentSubmaster.user_Id }, { $set: { 'members.$.role': GuildRole.MEMBER } }, { session });
-        await this.userModel.updateOne({ _id: currentSubmaster.user_Id }, { $set: { 'guild.role': GuildRole.MEMBER } }, { session });
+        await this.userModel.updateOne({ _id: currentSubmaster }, { $set: { 'guild.role': GuildRole.MEMBER } }, { session });
       }
-      // 새 부마스터 임명
-      await this.guildModel.updateOne({ _id: guild_Id, 'members.user_Id': target_Id }, { $set: { 'members.$.role': GuildRole.SUBMASTER } }, { session });
+      // 3. User: 타겟 guild role 변경
       await this.userModel.updateOne({ _id: target_Id }, { $set: { 'guild.role': GuildRole.SUBMASTER } }, { session });
 
       await session.commitTransaction();
 
-      // 블랙리스트 처리
+      //************ stateless ************//
       if (currentSubmaster) {
-        await this.redisService.blacklistUser(currentSubmaster.user_Id.toString());
+        await this.redisService.setRefreshList(currentSubmaster);
       }
-      await this.redisService.blacklistUser(target_Id);
-
-      return { success: true };
+      await this.redisService.setRefreshList(target_Id);
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -398,24 +408,26 @@ export class GuildCommandService {
 
   /** [Private] 부마스터가 다른 멤버에게 부마스터를 위임 (자신은 멤버로 강등) */
   private async _handleSubmasterTransferBySubmaster(actor: UserPayload, target_Id: mongoose.Types.ObjectId): Promise<Tokens> {
-    const guild_Id = actor.guild!.guildId
+    const guildId = actor.guildId!
 
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
-      // 1. 기존 부마스터(actor)를 멤버로 강등
-      await this.guildModel.updateOne({ _id: guild_Id, 'members.user_Id': actor._id }, { $set: { 'members.$.role': GuildRole.MEMBER } }, { session });
-      await this.userModel.updateOne({ _id: actor._id }, { $set: { 'guild.role': GuildRole.MEMBER } }, { session });
-
-      // 2. 새로운 부마스터(target)로 승급
-      await this.guildModel.updateOne({ _id: guild_Id, 'members.user_Id': target_Id }, { $set: { 'members.$.role': GuildRole.SUBMASTER } }, { session });
+      // 1. Guild: submaster 변경
+      await this.guildModel.updateOne({ _id: guildId }, { $set: { submaster: target_Id } }, { session });
+      // 2. User: actor guildRole 변경
+      await this.userModel.updateOne({ _id: actor.id }, { $set: { 'guild.role': GuildRole.MEMBER } }, { session });
+      // 3. User: target guildRole 변경
       await this.userModel.updateOne({ _id: target_Id }, { $set: { 'guild.role': GuildRole.SUBMASTER } }, { session });
-      // actor의 userModel 업데이트는 issueTokens 전에 최신 정보를 불러올 것이므로 여기서 생략 가능
 
       await session.commitTransaction();
-      await this.redisService.blacklistUser(target_Id);
 
+      //************ stateless ************//
+      //1. target은 RefreshList
+      await this.redisService.setRefreshList(target_Id);
+      //2. actor는 토큰 재발행
       const newTokens = await this.authService.issueTokens(actor);
+
       return newTokens;
     } catch (error) {
       await session.abortTransaction();
@@ -428,12 +440,12 @@ export class GuildCommandService {
   ////////////////////////////////guild-code////////////////////////////////
 
   /** 길드 초대 코드 생성/갱신 */
-  async generateGuildCode(guild_Id: mongoose.Types.ObjectId): Promise<guildCode> {
+  async generateGuildCode(guildId: mongoose.Types.ObjectId): Promise<guildCode> {
     // 10자리 길이의 URL-friendly 코드를 생성 (예: 'a4V-g8sX_1')
     const newCode = nanoid(10);
 
     // 길드 코드 업데이트 
-    await this.guildModel.updateOne({ _id: guild_Id }, { $set: { code: newCode } });
+    await this.guildModel.updateOne({ _id: guildId }, { $set: { code: newCode } });
 
     return { code: newCode };
   }

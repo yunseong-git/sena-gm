@@ -15,7 +15,7 @@ export class RedisService {
    * 특정 유저를 블랙리스트에 추가
    * @param userId 블랙리스트에 추가할 유저의 ID
    */
-  async blacklistUser(userId: Types.ObjectId | string): Promise<void> {
+  async setRefreshList(userId: Types.ObjectId | string): Promise<void> {
     // Redis 키는 'prefix:id' 형태로 만드는 것이 일반적(ex: blacklist:6528d...)
     const key = `blacklist:${userId.toString()}`;
     const value = 'blacklisted'; // 값은 중요하지 않지만, 추적을 위해 의미있는 값을 씀
