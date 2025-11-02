@@ -3,7 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { RefreshListGuard } from './guards/refresh-list.guard.js';
-import { User, UserSchema } from '#src/user/schemas/user.schema.js';
+import { User, UserSchema } from '#src/user/profile/schemas/user.schema.js';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';

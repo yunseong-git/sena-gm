@@ -1,8 +1,12 @@
-export type Tokens = {
+import { JwtPayload, UserPayload } from "./payload.type.js";
+
+export type AccessTokenWithPayload = {
   accessToken: string;
-  refreshToken: string;
+  payload: JwtPayload;
 }
 
-export type AccessToken = {
+export type TokensWithPayload = {
   accessToken: string;
+  refreshToken: string;
+  payload: JwtPayload;
 }

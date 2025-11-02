@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 //db
 import { MongooseModule } from '@nestjs/mongoose';
 import { Guild, GuildSchema } from './schemas/guild.schema.js';
-import { User, UserSchema } from '#src/user/schemas/user.schema.js';
+import { User, UserSchema } from '#src/user/profile/schemas/user.schema.js';
 //services
 import { GuildCommandService } from './services/guild-command.service.js';
 import { GuildQueryService } from './services/guild-query.service.js';

@@ -19,7 +19,7 @@ export class GuildPublicController {
   @Post('create')
   @HttpCode(HttpStatus.OK)
   async createGuild(@User() user: UserPayload, @Body() createGuildDto: CreateGuildDto, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, refreshToken } = await this.guildCommandService.createGuild(createGuildDto, user);
+    const { accessToken, refreshToken, payload } = await this.guildCommandService.createGuild(createGuildDto, user);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: false, // 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
@@ -32,12 +32,14 @@ export class GuildPublicController {
       sameSite: 'strict',
       maxAge: 1000 * 60 * 15, //15분
     });
+
+    return payload
   }
 
   @Post('join')
   @HttpCode(HttpStatus.OK)
   async joinGuild(@User() user: UserPayload, @Body('code') code: string, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, refreshToken } = await this.guildCommandService.joinGuild(code, user);
+    const { accessToken, refreshToken, payload } = await this.guildCommandService.joinGuild(code, user);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: false, // 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
@@ -50,6 +52,7 @@ export class GuildPublicController {
       sameSite: 'strict',
       maxAge: 1000 * 60 * 15, //15분
     });
+    return payload
   }
 
 }

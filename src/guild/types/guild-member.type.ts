@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { GuildRole } from "../schemas/guild.schema.js";
-import { MyHero } from "#src/user/schemas/user-heroes.schema.js";
+import { MyHero } from "#src/user/power/schemas/user-heroes.schema.js";
 
 //길드원 기본 정보 (이름, 태그, 역할)
 export type GuildMemberBasicInfo = {

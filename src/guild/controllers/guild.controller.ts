@@ -14,9 +14,8 @@ import { UserPayload } from '#src/auth/types/payload.type.js';
 import { GuildMemberBasicInfo, GuildMemberDetailInfo } from '../types/guild-member.type.js';
 import { TargetIdDto } from '../dto/target-id.dto.js';
 import { guildCode } from '../types/guild.type.js';
-import { Tokens } from '#src/auth/types/token-response.type.js';
 import { GuildRole } from '../schemas/guild.schema.js';
-
+import { TokensWithPayload } from '#src/auth/types/token-response.type.js';
 
 /**길드를 가입한 상태에서 사용하는 컨트롤러 */
 @Controller('guild')
@@ -49,7 +48,7 @@ export class GuildController {
   @Delete('leave')
   @HttpCode(HttpStatus.OK)
   async leaveGuild(@User() user: UserPayload, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, refreshToken } = await this.guildCommandService.leaveGuild(user);
+    const { accessToken, refreshToken, payload } = await this.guildCommandService.leaveGuild(user);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: false, // 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
@@ -62,6 +61,7 @@ export class GuildController {
       sameSite: 'strict',
       maxAge: 1000 * 60 * 15, //15분
     });
+    return payload
   }
 
   // ==================== 길드 관리 ====================
@@ -77,7 +77,7 @@ export class GuildController {
   @GuildRoles(GuildRole.MASTER)
   @HttpCode(HttpStatus.OK)
   async dismissGuild(@User() user: UserPayload, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, refreshToken } = await this.guildCommandService.dismissGuild(user);
+    const { accessToken, refreshToken, payload } = await this.guildCommandService.dismissGuild(user);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true, // JavaScript에서 접근 불가
       secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
@@ -90,13 +90,14 @@ export class GuildController {
       sameSite: 'strict',
       maxAge: 1000 * 60 * 15, //15분
     });
+    return payload
   }
   // ==================== 권한 변경 ====================
 
   @Post('master/transfer')
   @GuildRoles(GuildRole.MASTER)
   async transferMaster(@User() user: UserPayload, @Body() dto: TargetIdDto, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, refreshToken } = await this.guildCommandService.transferMaster(user, dto.targetId);
+    const { accessToken, refreshToken, payload } = await this.guildCommandService.transferMaster(user, dto.targetId);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true, // JavaScript에서 접근 불가
       secure: false, // ❗ 로컬(http) 테스트 시 false. 배포(https) 시 true로 변경!
@@ -109,6 +110,7 @@ export class GuildController {
       sameSite: 'strict',
       maxAge: 1000 * 60 * 15, //15분
     });
+    return payload;
   }
 
   @Post('submaster')
@@ -117,10 +119,9 @@ export class GuildController {
     const actorRole = user.guildRole;
     const result = await this.guildCommandService.setSubmaster(user, dto.targetId);
 
-    //액터가 submaster면 토큰 재발행
+    //액터가 submaster면 토큰 재발행 및 accessToken 반환
     if (actorRole === GuildRole.SUBMASTER) {
-      const { accessToken, refreshToken } = result as Tokens;
-
+      const { accessToken, refreshToken, payload } = result as TokensWithPayload;
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: false, // 로컬 개발 환경
@@ -133,6 +134,7 @@ export class GuildController {
         sameSite: 'strict',
         maxAge: 1000 * 60 * 15, //15분
       });
+      return payload;
     }
   }
   // ==================== 초대 코드 관리 ====================

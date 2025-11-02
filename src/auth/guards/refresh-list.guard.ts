@@ -21,7 +21,7 @@ export class RefreshListGuard extends PassportAuthGuard('jwt') {
     const user = request.user;
 
     // 2. Redis에 해당 유저 ID가 블랙리스트에 있는지 확인
-    const isBlacklisted = await this.redis.get(`blacklist:${user._id.toString()}`);
+    const isBlacklisted = await this.redis.get(`blacklist:${user.id.toString()}`);
 
     // 3. 블랙리스트에 있다면, 인증 실패 처리
     if (isBlacklisted) {

@@ -1,9 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { HeroType } from '#src/hero/schemas/hero.schema.js';
 
 @Schema({ _id: false })
-export class MyHero {
+export class UserHero {
     @Prop({ type: Types.ObjectId, ref: 'Heroes', required: true })
     hero_Id: Types.ObjectId;
 
@@ -15,4 +14,4 @@ export class MyHero {
     evolution: number;
 }
 
-export const MyHeroSchema = SchemaFactory.createForClass(MyHero);
+export const UserHeroSchema = SchemaFactory.createForClass(UserHero);

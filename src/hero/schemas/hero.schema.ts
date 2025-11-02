@@ -29,20 +29,8 @@ export class Skill {
   @Prop({ required: true, type: String, enum: SkillType })
   type: string;
 
-  @Prop({ type: String }) //없을수도 있음
-  name: string;
-
   @Prop({ required: true, type: String })
   description: string;
-
-  @Prop({ type: String }) //없을수도 있음
-  first_evolution?: string;
-
-  @Prop({ type: String }) //없을수도 있음
-  second_evolution?: string;
-
-  @Prop({ required: true, type: String })
-  upgrade: string;
 }
 
 export const SkillSchema = SchemaFactory.createForClass(Skill);

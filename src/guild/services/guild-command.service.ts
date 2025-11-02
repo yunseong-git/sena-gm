@@ -1,25 +1,25 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import mongoose from 'mongoose';
-
 import { nanoid } from 'nanoid';
 import { AuthService } from '#src/auth/auth.service.js';
-import { Tokens } from '#src/auth/types/token-response.type.js';
 import { simpleResponse } from '#src/common/types/response.type.js';
 import { RedisService } from '#src/redis/redis.service.js';
-import { User, UserDocument } from '#src/user/schemas/user.schema.js';
+import { User, UserDocument } from '#src/user/profile/schemas/user.schema.js';
 import { guildCode } from '../types/guild.type.js';
 import { CreateGuildDto } from '../dto/create-guild.dto.js';
 import { Guild, GuildDocument, GuildRole } from '../schemas/guild.schema.js';
 import { GuildQueryService } from './guild-query.service.js';
 import { UserPayload } from '#src/auth/types/payload.type.js';
+import { TokensWithPayload } from '#src/auth/types/token-response.type.js';
 
 @Injectable()
 export class GuildCommandService {
   constructor(
     //mongoose
-    @InjectModel(Guild.name) private guildModel: mongoose.Model<GuildDocument>,
-    @InjectModel(User.name) private userModel: mongoose.Model<UserDocument>,
+    @InjectModel(Guild.name) private guildModel: Model<GuildDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection, //for-transaction-session
 
     //inner-service
@@ -31,7 +31,7 @@ export class GuildCommandService {
   ) { }
 
   /** 길드 생성 (+토큰 재발행)*/
-  async createGuild(createGuildDto: CreateGuildDto, user: UserPayload): Promise<Tokens> {
+  async createGuild(createGuildDto: CreateGuildDto, user: UserPayload): Promise<TokensWithPayload> {
     //************ fail-fast ************//
     // 1. 유저 사전 검증
     if (user.guildId) {
@@ -72,8 +72,8 @@ export class GuildCommandService {
       await session.commitTransaction();
 
       //************ stateless ************//
-      const newTokens = await this.authService.issueTokens(user);
-      return newTokens
+      const newTokensWithPayload = await this.authService.issueTokens(user);
+      return newTokensWithPayload
     } catch (error) {
       await session.abortTransaction(); //에러 시 재시작 없이 트랜잭션 종료
       throw error;
@@ -83,7 +83,7 @@ export class GuildCommandService {
   }
 
   /** 길드 해산 (+토큰 재발행) */
-  async dismissGuild(user: UserPayload): Promise<Tokens> {
+  async dismissGuild(user: UserPayload): Promise<TokensWithPayload> {
 
     //************ Fail-Fast (Optimized) ************//
     // 1. 다른 길드원이 존재하는지 여부만 '가볍게' 확인
@@ -117,9 +117,9 @@ export class GuildCommandService {
       await session.commitTransaction();
 
       //************ stateless ************//
-      const newTokens = await this.authService.issueTokens(user);
+      const newTokensWithPayload = await this.authService.issueTokens(user);
 
-      return newTokens;
+      return newTokensWithPayload;
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -131,7 +131,7 @@ export class GuildCommandService {
   ////////////////////////////////members////////////////////////////////
 
   /** 길드 가입(+토큰 재발행) */
-  async joinGuild(code: string, user: UserPayload): Promise<Tokens> {
+  async joinGuild(code: string, user: UserPayload): Promise<TokensWithPayload> {
     //************ fail-fast ************//
     // 1. 유저 사전 검증
     if (user.guildId) throw new ConflictException('이미 가입된 길드가 있습니다.');
@@ -174,8 +174,8 @@ export class GuildCommandService {
       await session.commitTransaction();
 
       //************ stateless ************//
-      const newTokens = await this.authService.issueTokens(user);
-      return newTokens;
+      const newTokensWithPayload = await this.authService.issueTokens(user);
+      return newTokensWithPayload;
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -187,7 +187,7 @@ export class GuildCommandService {
   /** 길드원 추방 (+blacklist) */
   async kickMember(actor: UserPayload, target_Id: string): Promise<simpleResponse> {
     const guildId = actor.guildId!
-    const target = new mongoose.Types.ObjectId(target_Id); //objectId로 변환
+    const target = new Types.ObjectId(target_Id); //objectId로 변환
 
     //************ Fail-Fast ************//
     // 1. 자기 추방
@@ -243,7 +243,7 @@ export class GuildCommandService {
 
 
   /** 길드 탈퇴 (+refresh) */
-  async leaveGuild(user: UserPayload): Promise<Tokens> {
+  async leaveGuild(user: UserPayload): Promise<TokensWithPayload> {
     //************ Fail-Fast ************//
     // 1. 길마가 탈퇴하려함
     if (user.guildRole === GuildRole.MASTER) {
@@ -288,9 +288,9 @@ export class GuildCommandService {
   ////////////////////////////////roles////////////////////////////////
 
   /** 길드 마스터 위임 (target = blacklist, actor = 토큰 재발행)*/
-  async transferMaster(actor: UserPayload, target_Id: string): Promise<Tokens> {
+  async transferMaster(actor: UserPayload, target_Id: string): Promise<TokensWithPayload> {
     const guildId = actor.guildId!
-    const target = new mongoose.Types.ObjectId(target_Id);
+    const target = new Types.ObjectId(target_Id);
     //************ Fail-Fast ************//
     //1. 자기 위임
     if (actor.id.equals(target)) {
@@ -340,7 +340,7 @@ export class GuildCommandService {
   /** 길드 부마스터 위임 (분리된 로직) */
   async setSubmaster(actor: UserPayload, target_Id: string) {
     const guildId = actor.guildId!
-    const target = new mongoose.Types.ObjectId(target_Id);
+    const target = new Types.ObjectId(target_Id);
 
     //************ Fail-Fast ************//
     //1. 자기 위임
@@ -375,7 +375,7 @@ export class GuildCommandService {
   }
 
   /** [Private] 마스터가 부마스터를 위임 */
-  private async _handleSubmasterTransferByMaster(guildId: mongoose.Types.ObjectId, target_Id: mongoose.Types.ObjectId, currentSubmaster: mongoose.Types.ObjectId | null | undefined) {
+  private async _handleSubmasterTransferByMaster(guildId: Types.ObjectId, target_Id: Types.ObjectId, currentSubmaster: Types.ObjectId | null | undefined) {
 
     //************ transaction-session ************//
     const session = await this.connection.startSession();
@@ -407,7 +407,7 @@ export class GuildCommandService {
   }
 
   /** [Private] 부마스터가 다른 멤버에게 부마스터를 위임 (자신은 멤버로 강등) */
-  private async _handleSubmasterTransferBySubmaster(actor: UserPayload, target_Id: mongoose.Types.ObjectId): Promise<Tokens> {
+  private async _handleSubmasterTransferBySubmaster(actor: UserPayload, target_Id: Types.ObjectId): Promise<TokensWithPayload> {
     const guildId = actor.guildId!
 
     const session = await this.connection.startSession();
@@ -426,9 +426,9 @@ export class GuildCommandService {
       //1. target은 RefreshList
       await this.redisService.setRefreshList(target_Id);
       //2. actor는 토큰 재발행
-      const newTokens = await this.authService.issueTokens(actor);
+      const newTokensWithPayload = await this.authService.issueTokens(actor);
 
-      return newTokens;
+      return newTokensWithPayload;
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -440,7 +440,7 @@ export class GuildCommandService {
   ////////////////////////////////guild-code////////////////////////////////
 
   /** 길드 초대 코드 생성/갱신 */
-  async generateGuildCode(guildId: mongoose.Types.ObjectId): Promise<guildCode> {
+  async generateGuildCode(guildId: Types.ObjectId): Promise<guildCode> {
     // 10자리 길이의 URL-friendly 코드를 생성 (예: 'a4V-g8sX_1')
     const newCode = nanoid(10);
 

@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { UserGuildInfo, UserGuildInfoSchema } from './user-guild.schema.js';
-import { MyHero, MyHeroSchema } from './user-heroes.schema.js';
 
 // 유저의 역할을 정의하는 Enum. 확장성을 위해 배열로 관리합니다.
 export enum UserRole {
@@ -9,7 +8,7 @@ export enum UserRole {
   USER = 'user',
 }
 
-@Schema({ timestamps: true, collection: 'Users' })
+@Schema({ timestamps: true, collection: 'users' })
 export class User {
   // Google Ouath
   @Prop({ type: String, unique: true, sparse: true })
@@ -43,9 +42,9 @@ export class User {
   @Prop({ type: UserGuildInfoSchema, _id: false })
   guild?: UserGuildInfo; // 길드가 없을 수 있으므로 optional
 
-  // owned heroes info
-  @Prop({ type: [MyHeroSchema], default: [] })
-  myHeroes: MyHero[];
+  // 'power' 필드가 UserPower 컬렉션을 1:1로 참조 (DB 쿼리 시 populate 가능)
+  @Prop({ type: Types.ObjectId, ref: 'UserPower' })
+  power: Types.ObjectId;
 
   @Prop({ type: Date })
   lastLoginAt?: Date;

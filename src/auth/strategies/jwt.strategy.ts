@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from '#src/user/schemas/user.schema.js';
+import { User, UserDocument } from '#src/user/profile/schemas/user.schema.js';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload, UserPayload } from '../types/payload.type.js';
 import { Request } from 'express';
@@ -28,8 +28,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload): Promise<UserPayload> {
     return {
       id: new Types.ObjectId(payload.sub),
-      nickname: payload.nickname,
-      tag: payload.tag,
       userRole: payload.userRole,
       guildId: payload.guildId ? new Types.ObjectId(payload.guildId) : null,
       guildRole: payload.guildRole,
