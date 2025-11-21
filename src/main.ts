@@ -1,7 +1,9 @@
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { AllExceptionsFilter } from './common/filters/all-exception.filter.js';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,14 +16,31 @@ async function bootstrap() {
   }));
 
   app.enableCors({
-    // 1. 프론트엔드 주소(3001번)를 명시적으로 허용
-    origin: 'http://localhost:3001', 
-    
-    // 2. 쿠키(refreshToken)를 주고받으려면 필수
-    credentials: true, 
+    origin: process.env.CLIENT_URL ?? 'http://localhost:3001',
+    credentials: true, //쿠키
   });
 
+  const httpAdapter = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
+
   app.use(cookieParser());
+
+  const config = new DocumentBuilder()
+    .setTitle('SenaGM API')
+    .setDescription('SenaGM API 문서입니다.')
+    .setVersion('1.0')
+    .addCookieAuth('accessToken') // (선택) JWT 인증을 테스트하려면 추가 (쿠키 기반이라 UI에서 직접 입력은 안 되지만 표시는 됨)
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+
+  // 'api' 경로에 Swagger UI를 띄움 (http://localhost:3000/api)
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true, // 새로고침 해도 인증 유지
+      withCredentials: true,
+    },
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }

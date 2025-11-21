@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { GuildRole } from '#src/guild/schemas/guild.schema.js';
+import { GUILD_ROLE_ENUM } from '#src/guild/schemas/guild.schema.js';
 
 @Schema({ _id: false })
 export class UserGuildInfo {
@@ -10,7 +10,7 @@ export class UserGuildInfo {
     @Prop()
     name: string;
 
-    @Prop({ type: String, enum: GuildRole })
+    @Prop({ type: String, enum: GUILD_ROLE_ENUM })
     role: string;
 }
 

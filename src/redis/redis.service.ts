@@ -1,38 +1,89 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import * as ioredis from 'ioredis';
 import { Types } from 'mongoose';
-import { REDIS_CLIENT } from './redis.constants.js';
+import { REDIS_CLIENT } from '../common/constatnts/redis.constant.js';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RedisService {
   constructor(
     @Inject(REDIS_CLIENT) private readonly redis: ioredis.Redis,
+    private readonly logger = new Logger(RedisService.name),
     private readonly configService: ConfigService,
   ) { }
 
-  /**
-   * 특정 유저를 블랙리스트에 추가
-   * @param userId 블랙리스트에 추가할 유저의 ID
-   */
-  async setRefreshList(userId: Types.ObjectId | string): Promise<void> {
-    // Redis 키는 'prefix:id' 형태로 만드는 것이 일반적(ex: blacklist:6528d...)
-    const key = `blacklist:${userId.toString()}`;
-    const value = 'blacklisted'; // 값은 중요하지 않지만, 추적을 위해 의미있는 값을 씀
-    const ttl = this.configService.get<number>('BLACKLIST_TTL');
-    if (!ttl) throw new Error('BLACKLIST_TTL 환경 변수가 설정되지 않았습니다.');
+  // --- strict logic ---
+  // redis 죽으면 error Throw
 
-    //초단위
-    await this.redis.set(key, value, 'EX', ttl);
+  async getOrThrow(userId: Types.ObjectId | string): Promise<string | null> {
+    try {
+      const key = `user:state-patch:${userId.toString()}`;
+      return await this.redis.get(key);
+    } catch (e) {
+      this.logger.error(`Redis GET failed: ${userId.toString()}`, e);
+      throw new ServiceUnavailableException('서버 문제로 현재 해당 서비스를 사용할 수 없습니다.');
+    }
   }
 
-  /**
- * 특정 유저를 블랙리스트에서 제거
- * @param userId 블랙리스트에서 제거할 유저의 ID
- */
-  async removeFromBlacklist(userId: Types.ObjectId | string): Promise<void> {
-    const key = `blacklist:${userId.toString()}`;
-    await this.redis.del(key);
+  /**list에 set, 실패시 throw */
+  async setOrThrow(userId: Types.ObjectId | string): Promise<void> {
+    try {
+      const key = `user:state-patch:${userId.toString()}`;
+      const value = '1'; //걍 의미 없음, 데이터절약이나
+      const ttl = this.configService.getOrThrow<number>('STATEPATCHLIST_TTL');
+
+      await this.redis.set(key, value, 'EX', ttl);
+    } catch (e) {
+      this.logger.error(`Redis SET failed: ${userId.toString()}`, e);
+      throw new ServiceUnavailableException('서버 문제로 현재 해당 서비스를 사용할 수 없습니다.');
+    }
   }
 
+  /**list에 set, 실패시 throw */
+  async delOrThrow(userId: Types.ObjectId | string): Promise<void> {
+    try {
+      const key = `user:state-patch:${userId.toString()}`;
+      await this.redis.del(key);
+    } catch (e) {
+      this.logger.error(`Redis DEL failed: ${userId.toString()}`, e);
+      throw new ServiceUnavailableException('서버 문제로 현재 해당 서비스를 사용할 수 없습니다.');
+    }
+  }
+
+  // --- safe logic ---
+  // redis가 죽어도 null
+
+  /**list에 set, 실패시 not throw */
+  async safeSet(userId: Types.ObjectId | string): Promise<void> {
+    try {
+      const key = `user:state-patch:${userId.toString()}`;
+      const value = '1'; //걍 의미 없음, 데이터절약이나
+      const ttl = this.configService.getOrThrow<number>('STATEPATCHLIST_TTL');
+
+      await this.redis.set(key, value, 'EX', ttl);
+    } catch (e) {
+      this.logger.error(`Redis SET failed: ${userId.toString()}`, e);
+    }
+  }
+
+  /**list에 del, 실패시 not throw */
+  async safeDel(userId: Types.ObjectId | string): Promise<void> {
+    try {
+      const key = `user:state-patch:${userId.toString()}`;
+      await this.redis.del(key);
+    } catch (e) {
+      this.logger.error(`Redis DEL failed: ${userId.toString()}`, e);
+    }
+  }
+
+  /**list에 get, 실패시 not throw */
+  async safeGet(userId: Types.ObjectId | string): Promise<string | null> {
+    try {
+      const key = `user:state-patch:${userId.toString()}`;
+      return await this.redis.get(key);
+    } catch (e) {
+      this.logger.error(`Redis GET failed: ${userId.toString()}`, e);
+      return null;
+    }
+  }
 }

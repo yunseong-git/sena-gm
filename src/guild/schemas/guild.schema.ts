@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Query, Types } from 'mongoose';
 
 // 길드 역할 Enum
-export enum GuildRole {
+export enum GUILD_ROLE_ENUM {
   MASTER = 'master',
   SUBMASTER = 'submaster',
   MANAGER = 'manager',
@@ -17,11 +17,17 @@ export class Guild {
   @Prop({ required: true, type: Number })
   tag: number;
 
-  @Prop({ type: Types.ObjectId })
+  @Prop({ type: String })
+  notice: string;
+
+  @Prop({ type: Types.ObjectId, required: true })
   master: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId })
   submaster: Types.ObjectId;
+
+  @Prop({ type: [Types.ObjectId], default: [] })
+  managers: Types.ObjectId[];
 
   @Prop({ type: [Types.ObjectId], default: [] })
   members: Types.ObjectId[];
@@ -37,31 +43,8 @@ export class Guild {
 export type GuildDocument = HydratedDocument<Guild>;
 export const GuildSchema = SchemaFactory.createForClass(Guild);
 
+// --- indexes ---
 
-///////////////////////pre-hooks//////////////////////////
-// this는 Mongoose의 Query 객체
-// '$ne: true'는 isDeleted 필드가 없거나(null, undefined) false인 경우를 모두 포함
-// 1. 조회(find) 쿼리를 위한 pre-hook
-GuildSchema.pre(
-  /^find/,
-  function (this: Query<GuildDocument, GuildDocument>, next) {
-    this.where({ isDeleted: { $ne: true } });
-    next();
-  },
-);
-
-GuildSchema.index({ name: 1, tag: 1 }, { unique: true });
-
-// 2. 업데이트(update) 쿼리를 위한 pre-hook
-/*
-GuildSchema.pre(
-  ['updateOne', 'updateMany', 'findOneAndUpdate'],
-  function (this: Query<GuildDocument, GuildDocument>, next) {
-    this.where({ isDeleted: { $ne: true } });
-
-    next();
-  });
-
-*/
 //길드명 + tag 넘버 복합 인덱스
+GuildSchema.index({ name: 1, tag: 1 }, { unique: true });
 

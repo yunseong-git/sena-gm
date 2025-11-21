@@ -2,17 +2,16 @@ import { Module } from '@nestjs/common';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AdventwarModule } from './adventwar/adventwar.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
 import { DeckModule } from './deck/deck.module.js';
 import { GuildModule } from './guild/guild.module.js';
-import { GuildwarModule } from './guildwar/guildwar.module.js';
 import { HeroModule } from './hero/hero.module.js';
-import { PickModule } from './pick/pick.module.js';
 import { RedisModule } from './redis/redis.module.js';
 import { UserModule } from './user/user.module.js';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 
 
 @Module({
@@ -32,16 +31,21 @@ import { UserModule } from './user/user.module.js';
       inject: [ConfigService], // useFactory에 ConfigService를 주입
     }),
     UserModule,
-    GuildwarModule,
-    PickModule,
     HeroModule,
     DeckModule,
     AuthModule,
     GuildModule,
     RedisModule,
-    AdventwarModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [
+    AppController
+  ],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule { }

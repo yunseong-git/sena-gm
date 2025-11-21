@@ -2,8 +2,8 @@ import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
-import { RefreshListGuard } from './guards/refresh-list.guard.js';
-import { User, UserSchema } from '#src/user/profile/schemas/user.schema.js';
+import { StatePatchGuard } from '../common/guards/state-patch.guard.js';
+import { User, UserSchema } from '#src/user/user.schema.js';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -24,7 +24,7 @@ import { UserModule } from '#src/user/user.module.js';
     JwtModule.registerAsync({
       imports: [ConfigModule], // ConfigService를 사용하기 위해 ConfigModule을 임포트
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET_KEY'), // 환경 변수에서 값 가져오기
+        secret: configService.get<string>('JWT_ACCESS_SECRET'), // 환경 변수에서 값 가져오기
         signOptions: { expiresIn: '1h' },
       }),
       inject: [ConfigService], // ConfigService를 주입합니다.
@@ -35,8 +35,8 @@ import { UserModule } from '#src/user/user.module.js';
     AuthService,
     JwtStrategy,
     JwtRefreshStrategy,
-    RefreshListGuard
+    StatePatchGuard
   ],
-  exports: [AuthService, RefreshListGuard],
+  exports: [AuthService, StatePatchGuard],
 })
 export class AuthModule { }

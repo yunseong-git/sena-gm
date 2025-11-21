@@ -7,11 +7,7 @@ import { Request } from 'express';
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(private readonly configService: ConfigService) {
-    const key = configService.get<string>('JWT_REFRESH_SECRET');
-    if (!key) {
-      throw new Error('JWT_REFRESH_SECRET 환경 변수가 설정되지 않았습니다.');
-    }
-
+    const key = configService.getOrThrow<string>('JWT_REFRESH_SECRET');
     super({
       // 1. 쿠키에서 'refreshToken' 필드를 읽어옴
       jwtFromRequest: (req: Request) => {

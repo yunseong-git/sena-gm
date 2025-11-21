@@ -1,11 +1,7 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Guild, GuildDocument, GuildRole } from '#src/guild/schemas/guild.schema.js';
+import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '#src/guild/schemas/guild.schema.js';
 import { guildCode } from '../types/guild.type.js';
 import { simpleGuildInfo } from '../types/guild.type.js';
 import { GuildMemberBasicInfo, GuildMemberDetailInfo } from '../types/guild-member.type.js';
@@ -16,10 +12,10 @@ export class GuildQueryService {
     @InjectModel(Guild.name) private guildModel: Model<GuildDocument>,
   ) { }
 
-  // ==================== 길드 조회 ====================
+  // --- basic query ---
 
   /**기본 길드정보 조회 */
-  async findMyGuild(guildId: Types.ObjectId): Promise<simpleGuildInfo> {
+  async findGuildById(guildId: Types.ObjectId): Promise<simpleGuildInfo> {
     const guild = await this.guildModel.findById(guildId, { _id: 1, name: 1, tag: 1 })
     if (!guild) throw new NotFoundException('길드를 찾을 수 없습니다.');
 
@@ -27,7 +23,7 @@ export class GuildQueryService {
   }
 
   /** 길드 멤버 목록 조회 (이름, 태그, 역할) */
-  async findMyGuildMembers(guildId: Types.ObjectId): Promise<GuildMemberBasicInfo[]> {
+  async findMembers(guildId: Types.ObjectId): Promise<GuildMemberBasicInfo[]> {
     const members = await this._aggregateGuildMembers<GuildMemberBasicInfo>(guildId, { nickname: 1, tag: 1, 'guild.role': 1 });
 
     return members;

@@ -1,30 +1,30 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Model, Types } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from '#src/user/profile/schemas/user.schema.js';
+import { Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { JwtPayload, UserPayload } from '../types/payload.type.js';
-import { Request } from 'express';
+import { Types } from 'mongoose';
+import type { Request } from 'express';
+import { JwtPayload, UserPayload } from '../interfaces/token-payload.interface.js';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    @InjectModel(User.name)
-    private userModel: Model<UserDocument>,
-    private configService: ConfigService,
-  ) {
-    const key = configService.get<string>('JWT_SECRET');
-    if (!key) throw new Error('JWT_SECRET is not defined')
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  constructor(configService: ConfigService) {
     super({
-      jwtFromRequest: (req: Request) => req.cookies?.accessToken,
-      secretOrKey: key,
+      // 1. 쿠키에서 accessToken 추출
+      jwtFromRequest: (req: Request) => {
+        // req.cookies가 없는 경우(미들웨어 미설정 등) 대비
+        if (!req || !req.cookies) return null;
+        return req.cookies['accessToken'];
+      },
+      // 2. 만료된 토큰은 401 에러 (false로 설정 시)
       ignoreExpiration: false,
+      secretOrKey: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
     });
   }
 
-  /**JwtPayload -> UserPayload */
+  /** * 3. Payload 검증 및 변환
+   * (Passport가 서명 검증 완료 후 호출함)
+   */
   async validate(payload: JwtPayload): Promise<UserPayload> {
     return {
       id: new Types.ObjectId(payload.sub),
@@ -34,4 +34,3 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     };
   }
 }
-

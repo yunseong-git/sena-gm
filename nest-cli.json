@@ -4,6 +4,16 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "builder": "tsc",
-    "webpack": false
+    "webpack": false,
+    "deleteOutDir": true,
+    "plugins": [
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "classValidatorShim": true,
+          "introspectComments": true
+        }
+      }
+    ]
   }
 }

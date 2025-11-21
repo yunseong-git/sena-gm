@@ -1,115 +1,135 @@
-// auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
-import { User, UserDocument } from '#src/user/profile/schemas/user.schema.js';
-import { LoginDto } from './dto/login.dto.js';
+import { UserDocument } from '#src/user/user.schema.js';
 import { ConfigService } from '@nestjs/config';
-import { UserService } from '#src/user/profile/user.service.js';
 import { RedisService } from '#src/redis/redis.service.js';
-import { AccessTokenWithPayload, TokensWithPayload } from './types/token-response.type.js';
-import { CreateUserDto } from '#src/user/profile/dto/user.dto.js';
-import { UserPayload } from './types/payload.type.js';
+import { UserService } from '#src/user/services/user.service.js';
+import { GoogleAuthResult } from './interfaces/google.interface.js';
+import { TokensWithPayload, AccessTokenWithPayload, RefreshToken } from './interfaces/token-payload.interface.js';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly userService: UserService,
     private readonly redisService: RedisService,
   ) { }
 
-  async register(dto: CreateUserDto): Promise<UserDocument> {
-    const createdUser = await this.userService.createUser(dto);
-    return createdUser;
+  // --- google auth ---
+
+  /** 구글 로그인 동작 (two case) */
+  async handleGoogleLogin(googleUser: { googleId: string; email: string })
+    : Promise<GoogleAuthResult> {
+    const user = await this.userService.findByGoogleId(googleUser.googleId);
+
+    if (user) { // Case A: 이미 가입된 유저 -> 로그인 토큰 발급
+      const tokensWithPayload = await this.activateTokenSet(user);
+      await this.redisService.safeDel(user._id.toString());
+
+      return {
+        type: 'login',
+        ...tokensWithPayload,
+      };
+
+    } else { // Case B: 신규 유저 -> 가입용 임시 토큰 발급
+      const registerToken = await this.jwtService.signAsync(
+        { googleId: googleUser.googleId, email: googleUser.email },
+        { secret: this.configService.get('JWT_REGISTER_SECRET'), expiresIn: '10m' },
+      );
+
+      return {
+        registerToken,
+        type: 'register'
+      };
+    }
   }
 
-  /**
-   * 1. 유저 확인(validateUser)
-   * 2. blacklist 해제
-   * 3. 토큰활성화 / access는 생성만, refresh는 생성후 유저 collection에 저장
-   * 4. accesstoken 및 refreshToken return */
-  async login(dto: LoginDto): Promise<TokensWithPayload> {
-    const { testId, password } = dto;
+  /** google register */
+  async finalizeGoogleRegister(nickname: string, registerToken: string)
+    : Promise<TokensWithPayload> {
+    //register 토큰 decode
+    const decoded = await this.jwtService.verifyAsync(registerToken, {
+      secret: this.configService.getOrThrow('JWT_REGISTER_SECRET')
+    });
 
-    // 비밀번호 해싱 비교 없이 평문으로 비교(나중에 oauth 도입시 삭제 예정)
-    const user = await this.validateUser(testId, password);
+    //create user info
+    const userInfo = {
+      googleId: decoded.googleId,
+      nickname: nickname,
+      email: decoded.email,
+    }
 
-    await this.redisService.removeFromBlacklist(user._id.toString());
-    const { accessToken, payload } = await this.generateAccessToken(user)
-    const refreshToken = await this.activateRefreshToken(user)
+    //유저 create
+    const newUser = await this.userService.createGoogleUser(userInfo)
+
+    //토큰셋 발급
+    const TokensWithPayload = await this.activateTokenSet(newUser)
+
+    return TokensWithPayload;
+  }
+
+  // --- refreshing ---
+
+  /**refreshToken 검증 후 access_token 재발급(클라이언트 주도용) */
+  async Refreshing(userId: string, refreshToken: string)
+    : Promise<AccessTokenWithPayload> {
+    const user = await this.userService.getUserIfRefreshTokenMatches(userId, refreshToken);
+    if (!user) {
+      throw new UnauthorizedException('유효하지 않은 토큰입니다.');
+    }
+
+    const AccessTokenWithPayload = await this._issueAccessToken(user);
+
+    //patchList에서 제거
+    await this.redisService.safeDel(user._id.toString());
+
+    return AccessTokenWithPayload;
+  }
+
+  // --- about tokens ---
+
+  /**accessToken 발급, refrehToken 발급 및 DB 저장 */
+  async activateTokenSet(user: UserDocument)
+    : Promise<TokensWithPayload> {
+    //token-set 발급
+    const { accessToken, payload } = await this._issueAccessToken(user)
+    const { refreshToken } = await this._issueRefreshToken(user)
+
+    //refresh-token 저장
+    await this.userService.saveRefreshToken(user._id, refreshToken)
 
     return { accessToken, refreshToken, payload };
   }
 
   /**access token 발급 */
-  private async generateAccessToken(user: UserDocument): Promise<AccessTokenWithPayload> {
+  private async _issueAccessToken(user: UserDocument)
+    : Promise<AccessTokenWithPayload> {
     const payload = {
       sub: user.id.toString(),
-      userRole: user.roles,
-      guildId: user.guild?.guildId.toString() || null,
-      guildRole: user.guild?.role || null
+      userRole: user.role,
+      guildId: user.guildId?.toString() || null,
+      guildRole: user.guildRole || null
     };
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
       expiresIn: '15m',
     });
     return { accessToken, payload };
   }
 
   /**refresh token 발급 및 저장 */
-  private async activateRefreshToken(user: UserDocument): Promise<string> {
+  private async _issueRefreshToken(user: UserDocument)
+    : Promise<RefreshToken> {
     const payload = {
       sub: user._id.toString()
     }
-    const refreshToken = this.jwtService.sign(payload, {
+    const refreshToken = await this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       expiresIn: '7d',
     });
 
-    await this.userService.saveRefreshToken(user._id, refreshToken)
-
-    return refreshToken;
-  }
-
-  /**유저 검증 */
-  async validateUser(testId: string, password: string): Promise<UserDocument> {
-    const user = await this.userModel.findOne({ testId, password });
-    if (!user) {
-      throw new UnauthorizedException('닉네임 또는 비밀번호가 올바르지 않습니다.');
-    }
-    return user;
-  }
-
-  /**refreshToken 검증 후 access_token 재발급(클라이언트 주도용) */
-  async Refreshing(userId: string, refreshToken: string): Promise<AccessTokenWithPayload> {
-    const user = await this.userService.getUserIfRefreshTokenMatches(userId, refreshToken);
-    if (!user) {
-      throw new UnauthorizedException('유효하지 않은 토큰입니다.');
-    }
-
-    const { accessToken, payload } = await this.generateAccessToken(user);
-    return { accessToken, payload };
-  }
-
-  async logout(userId: Types.ObjectId): Promise<void> {
-    // 액세스 토큰의 만료 시간과 동일하게 설정하여, 해당 토큰의 남은 수명 동안만 차단
-    await this.userService.removeRefreshToken(userId);
-    await this.redisService.setRefreshList(userId);
-  }
-
-  /**유저 확인후 토큰 재발급(서버 주도용) */
-  async issueTokens(old_user: UserPayload): Promise<TokensWithPayload> {
-    const user = await this.userModel.findById(old_user.id);
-    if (!user) throw new UnauthorizedException('유저를 찾을 수 없습니다.');
-
-    const { accessToken, payload } = await this.generateAccessToken(user);
-    const refreshToken = await this.activateRefreshToken(user); // 이 메서드는 내부적으로 DB 저장까지 포함
-
-    return { accessToken, payload, refreshToken };
+    return { refreshToken };
   }
 }
