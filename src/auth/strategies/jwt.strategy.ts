@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { Types } from 'mongoose';
 import type { Request } from 'express';
 import { JwtPayload, UserPayload } from '../interfaces/token-payload.interface.js';
+import { GUILD_ROLE_ENUM } from '#src/guild/schemas/guild.schema.js';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -30,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       id: new Types.ObjectId(payload.sub),
       userRole: payload.userRole,
       guildId: payload.guildId ? new Types.ObjectId(payload.guildId) : null,
-      guildRole: payload.guildRole,
+      guildRole: payload.guildRole as GUILD_ROLE_ENUM | null,
     };
   }
 }

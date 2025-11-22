@@ -35,8 +35,7 @@ import { UserModule } from '#src/user/user.module.js';
     AuthService,
     JwtStrategy,
     JwtRefreshStrategy,
-    StatePatchGuard
   ],
-  exports: [AuthService, StatePatchGuard],
+  exports: [AuthService],
 })
 export class AuthModule { }

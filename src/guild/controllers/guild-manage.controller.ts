@@ -1,56 +1,78 @@
-import { Controller, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Patch, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 //services
-import { GuildQueryService } from '../services/guild-query.service.js';
-import { GuildCommandService } from '../services/guild-command.service.js';
+import { UserService } from '#src/user/services/user.service.js';
+import { AuthService } from '#src/auth/auth.service.js';
+
 //decoraters,guards
-import { GuildGuard } from '../../common/guards/guild.guard.js';
-import { StatePatchGuard } from '#src/common/guards/state-patch.guard.js';
 import { Guild_Roles } from '#src/common/decorators/guild-roles.decorator.js';
 //others
 import { GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
 
+import { GuildRoleService } from '../services/guild-role.service.js';
+import { GuildMemberShipService } from '../services/guild-membership.service.js';
+import { User } from '#src/common/decorators/user.decorators.js';
+import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
+import { UpdateRoleDto } from '../dto/update-role.dto.js';
+import { Types } from 'mongoose';
+import { ACCESS_COOKIE_OPTION } from '#src/common/constatnts/cookie.constant.js';
+import type { Response } from 'express';
+import { GuildStrictGuard } from '#src/common/guards/guild-strict.guard.js';
+
+//타인의 데이터를 건드리는 경우
 @ApiTags('Guild - Managements')
 @Controller('guild/management')
-@UseGuards(StatePatchGuard, GuildGuard) // 컨트롤러 전체에 StatePatchListGuard와 GuildGuard 적용
+@UseGuards(GuildStrictGuard) // 컨트롤러 전체에 StatePatchListGuard와 GuildGuard 적용
 export class GuildManageController {
   constructor(
-    private readonly guildQueryService: GuildQueryService,
-    private readonly guildCommandService: GuildCommandService,
+    private readonly guildRoleService: GuildRoleService,
+    private readonly guildMembershipService: GuildMemberShipService,
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
   ) { }
+
+  @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
+  @Patch()
+  async setMaster(@User() user: UserPayload, @Body() dto: UpdateRoleDto) {
+    const targetId = new Types.ObjectId(dto.targetId)
+
+    await this.guildRoleService.setMaster(user, targetId)
+  }
 
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER, GUILD_ROLE_ENUM.SUBMASTER)
   @Patch()
-  async setManagers() {
+  async setManagers(@User() user: UserPayload, @Body() dto: UpdateRoleDto) {
+    const targetId = new Types.ObjectId(dto.targetId)
 
+    await this.guildRoleService.setManager(user, targetId)
   }
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
   @Patch()
-  async setSubMaster() {
+  async setSubMaster(@User() user: UserPayload, @Body() dto: UpdateRoleDto, @Res({ passthrough: true }) res: Response) {
+    const targetId = new Types.ObjectId(dto.targetId)
 
+    await this.guildRoleService.setSubmaster(user, targetId)
+
+    if (user.guildRole === GUILD_ROLE_ENUM.SUBMASTER) {
+      const updatedUser = await this.userService.findById(user.id);
+      const { accessToken, payload } = await this.authService.issueAccessToken(updatedUser);
+
+      res.cookie('accessToken', accessToken, ACCESS_COOKIE_OPTION);
+      return { payload };
+    }
   }
 
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER, GUILD_ROLE_ENUM.SUBMASTER)
   @Post()
-  async kickMember() {
+  async kickMember(@User() user: UserPayload, @Body() dto: UpdateRoleDto) {
+    const targetId = new Types.ObjectId(dto.targetId)
 
+    await this.guildMembershipService.kickMember(user, targetId)
   }
 
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER, GUILD_ROLE_ENUM.SUBMASTER)
   @Post()
   async generateCode() {
-
-  }
-
-  @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
-  @Patch()
-  async setMaster() {
-
-  }
-
-  @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
-  @Post()
-  async dissmiss() {
 
   }
 }

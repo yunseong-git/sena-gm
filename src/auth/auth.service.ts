@@ -79,7 +79,7 @@ export class AuthService {
       throw new UnauthorizedException('유효하지 않은 토큰입니다.');
     }
 
-    const AccessTokenWithPayload = await this._issueAccessToken(user);
+    const AccessTokenWithPayload = await this.issueAccessToken(user);
 
     //patchList에서 제거
     await this.redisService.safeDel(user._id.toString());
@@ -87,13 +87,15 @@ export class AuthService {
     return AccessTokenWithPayload;
   }
 
+  
+
   // --- about tokens ---
 
   /**accessToken 발급, refrehToken 발급 및 DB 저장 */
   async activateTokenSet(user: UserDocument)
     : Promise<TokensWithPayload> {
     //token-set 발급
-    const { accessToken, payload } = await this._issueAccessToken(user)
+    const { accessToken, payload } = await this.issueAccessToken(user)
     const { refreshToken } = await this._issueRefreshToken(user)
 
     //refresh-token 저장
@@ -103,7 +105,7 @@ export class AuthService {
   }
 
   /**access token 발급 */
-  private async _issueAccessToken(user: UserDocument)
+  async issueAccessToken(user: UserDocument)
     : Promise<AccessTokenWithPayload> {
     const payload = {
       sub: user.id.toString(),
@@ -132,4 +134,6 @@ export class AuthService {
 
     return { refreshToken };
   }
+
+  
 }

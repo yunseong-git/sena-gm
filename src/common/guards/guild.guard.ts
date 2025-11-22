@@ -1,43 +1,48 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { RedisService } from '#src/redis/redis.service.js';
+import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
 import { GUILD_ROLES_KEY } from '../decorators/guild-roles.decorator.js';
-import { GUILD_ROLE_ENUM } from '../../guild/schemas/guild.schema.js';
+import { GUILD_ROLE_ENUM } from '#src/guild/schemas/guild.schema.js';
 
 @Injectable()
 export class GuildGuard implements CanActivate {
-  constructor(private reflector: Reflector) { }
+  constructor(
+    private readonly redisService: RedisService,
+    private readonly reflector: Reflector,
+  ) { }
 
-  canActivate(context: ExecutionContext): boolean {
-    //@Guild_Role() 데코레이터에 전달된 인자(필요한 역할) 가져옴
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const user = request.user as UserPayload;
+
+    if (!user) throw new UnauthorizedException('로그인 정보가 없습니다.');
+
+    // 1. [Safe] Redis 상태 변경 확인 (Redis 죽으면 null 반환 -> 통과)
+    const stateKey = `user:state-patch:${user.id}`;
+    const isStateChanged = await this.redisService.safeGet(stateKey);
+
+    if (isStateChanged) {
+      throw new UnauthorizedException('회원 정보가 변경되어 다시 로그인이 필요합니다.');
+    }
+
+    // 2. 길드 멤버십 확인
+    if (!user.guildId || !user.guildRole) {
+      throw new ForbiddenException('길드에 소속되어 있지 않습니다.');
+    }
+
+    // 3. 역할(Role) 권한 확인
     const requiredRoles = this.reflector.getAllAndOverride<GUILD_ROLE_ENUM[]>(GUILD_ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    //데코레이터가 없으면, 이 가드는 통과 (길드 역할이 필요 없는 API)
-    if (!requiredRoles) {
-      return true;
+    if (requiredRoles && requiredRoles.length > 0) {
+      if (!requiredRoles.includes(user.guildRole)) {
+        throw new ForbiddenException('이 작업을 수행할 권한이 없습니다.');
+      }
     }
 
-    //AuthGuard 등을 통해 req 객체에 담긴 user 정보를 가져옴
-    const { user } = context.switchToHttp().getRequest();
-    if (!user) {
-      // 혹시 모를 상황 대비: AuthGuard가 제대로 작동 안했거나, user 정보가 없을 경우
-      throw new UnauthorizedException('로그인 정보가 없습니다.');
-    }
-
-    //유저가 길드에 소속되어 있는지, 역할 정보가 있는지 확인
-    if (!user.guildId || !user.GUILD_ROLE_ENUM) {
-      throw new ForbiddenException('길드에 소속되어 있지 않거나, 길드 역할이 없습니다.');
-    }
-
-    // 이 API에 필요한 역할 중 하나라도 유저의 역할과 일치하는지 확인
-    // @GUILD_ROLE() 처럼 인자 없이 데코레이터만 사용하면, 길드 소속 여부만 체크하게 됨
-    if (requiredRoles.length > 0 && !requiredRoles.includes(user.GUILD_ROLE)) {
-      throw new ForbiddenException('이 작업을 수행할 권한이 없습니다.');
-    }
-
-    //모든 검증을 통과하면 접근 허용
     return true;
   }
 }

@@ -25,7 +25,7 @@ export class RedisService {
     }
   }
 
-  /**list에 set, 실패시 throw */
+  /**[strict] list에 set, 실패시 throw */
   async setOrThrow(userId: Types.ObjectId | string): Promise<void> {
     try {
       const key = `user:state-patch:${userId.toString()}`;
@@ -39,7 +39,35 @@ export class RedisService {
     }
   }
 
-  /**list에 set, 실패시 throw */
+  /**[strict] 여러 유저의 상태를 한 번에 변경 (Pipeline) */
+  async setManyOrThrow(userIds: (Types.ObjectId | string)[]): Promise<void> {
+    // 1. 대상이 없으면 바로 리턴
+    if (userIds.length === 0) return;
+
+    try {
+      const ttl = this.configService.getOrThrow<number>('STATEPATCHLIST_TTL');
+
+      // 2. 파이프라인 생성
+      const pipeline = this.redis.pipeline();
+
+      // 3. 명령어 적재 (아직 전송 안 됨)
+      userIds.forEach(id => {
+        const key = `user:state-patch:${id.toString()}`;
+        pipeline.set(key, '1', 'EX', ttl);
+      });
+
+      // 4. 한 번에 전송 및 실행
+      // (enableOfflineQueue: false 설정 덕분에, Redis 죽으면 여기서 에러 펑!)
+      await pipeline.exec();
+
+    } catch (e) {
+      this.logger.error(`Redis Pipeline SET failed for users: [${userIds.join(', ')}]`, e);
+      throw new ServiceUnavailableException('서버 문제로 현재 해당 서비스를 사용할 수 없습니다.');
+    }
+  }
+
+
+  /**[strict] list에 set, 실패시 throw */
   async delOrThrow(userId: Types.ObjectId | string): Promise<void> {
     try {
       const key = `user:state-patch:${userId.toString()}`;

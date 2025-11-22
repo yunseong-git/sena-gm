@@ -1,3 +1,4 @@
+import { GUILD_ROLE_ENUM } from "#src/guild/schemas/guild.schema.js";
 import { User_Role_Enum } from "#src/user/user.schema.js";
 import { Types } from "mongoose";
 
@@ -26,7 +27,7 @@ export interface UserPayload {
     id: Types.ObjectId;
     userRole: User_Role_Enum;
     guildId: Types.ObjectId | null;
-    guildRole: string | null;
+    guildRole: GUILD_ROLE_ENUM | null;
 }
 
 // --- 3. Combined Responses (조합형) ---
