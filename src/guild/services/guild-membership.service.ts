@@ -1,22 +1,17 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException, InternalServerErrorException, ImATeapotException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, InternalServerErrorException, } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
-import { Model, ObjectId, Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Connection } from 'mongoose';
-import { nanoid } from 'nanoid';
-import { simpleResponse } from '#src/common/types/response.type.js';
+//services
 import { RedisService } from '#src/redis/redis.service.js';
-import { guildCode } from '../types/guild.type.js';
-import { CreateGuildDto } from '../dto/create-guild.dto.js';
-import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
-import { GuildQueryService } from './guild-query.service.js';
-import { TokensWithPayload, UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
 import { UserService } from '#src/user/services/user.service.js';
 import { UserGuildService } from '#src/user/services/user-guild.service.js';
-import { Counter, CounterDocument } from '#src/common/schemas/counter.schema.js';
+//others
+import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
+import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
 import { JoinGuildDto } from '../dto/req/join-guild.dto.js';
-import { UserDocument } from '#src/user/user.schema.js';
 
-//길드 
+/**길드 개인별 인원변동 관련 서비스 */
 @Injectable()
 export class GuildMemberShipService {
     constructor(

@@ -9,13 +9,17 @@ export enum GUILD_ROLE_ENUM {
   MEMBER = 'member',
 }
 
-@Schema({ timestamps: true, collection: 'Guilds' })
+@Schema({ timestamps: true, collection: 'Guilds', toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Guild {
   @Prop({ required: true, type: String })
   name: string;
 
-  @Prop({ required: true, type: Number })
-  tag: number;
+  @Prop({ required: true, type: String })
+  tag: String;
+
+  get fullName(): string {
+    return `${this.name}#${this.tag}`;
+  }
 
   @Prop({ type: String })
   notice: string;
@@ -47,4 +51,9 @@ export const GuildSchema = SchemaFactory.createForClass(Guild);
 
 //길드명 + tag 넘버 복합 인덱스
 GuildSchema.index({ name: 1, tag: 1 }, { unique: true });
+
+// --- virtual fields ---
+GuildSchema.virtual('fullname').get(function (this: Guild) {
+  return `${this.name}#${this.tag.toString()}`;
+});
 

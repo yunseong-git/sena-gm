@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException, InternalServerErrorException, ImATeapotException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
-import { Model, ObjectId, Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Connection } from 'mongoose';
 import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
 import { RedisService } from '#src/redis/redis.service.js';
@@ -8,7 +8,7 @@ import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
 import { UserService } from '#src/user/services/user.service.js';
 import { UserGuildService } from '#src/user/services/user-guild.service.js';
 
-//길드 
+/**길드 역할(권한) 변경 서비스 */
 @Injectable()
 export class GuildRoleService {
     constructor(

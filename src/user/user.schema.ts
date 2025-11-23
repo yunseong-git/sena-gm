@@ -22,11 +22,11 @@ export class User {
   @Prop({ required: true, type: String })
   nickname: string;
 
-  @Prop({ required: true, type: Number })
-  tag: number;
+  @Prop({ required: true, type: String })
+  tag: string;
 
   get fullNickname(): string {
-    return `${this.nickname}#${this.tag.toString().padStart(4, '0')}`;
+    return `${this.nickname}#${this.tag}`;
   }
 
   @Prop({ type: String, enum: User_Role_Enum, required: true, default: User_Role_Enum.USER })
@@ -59,5 +59,5 @@ UserSchema.index({ nickname: 1, tag: 1 }, { unique: true })
 
 // --- virtual fields ---
 UserSchema.virtual('fullNickname').get(function (this: User) {
-  return `${this.nickname}#${this.tag.toString().padStart(4, '0')}`;
+  return `${this.nickname}#${this.tag}`;
 });

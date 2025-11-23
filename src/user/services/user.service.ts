@@ -29,7 +29,7 @@ export class UserService {
     const userInfo = {
       googleId: dto.googleId,
       nickname: dto.nickname,
-      tag: tag,
+      tag: tag.toString(),
       email: dto.email,
       role: User_Role_Enum.USER,
     }

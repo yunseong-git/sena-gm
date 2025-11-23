@@ -1,20 +1,16 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException, InternalServerErrorException, ImATeapotException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
-import { Model, ObjectId, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Connection } from 'mongoose';
-import { nanoid } from 'nanoid';
-import { simpleResponse } from '#src/common/types/response.type.js';
 import { RedisService } from '#src/redis/redis.service.js';
-import { guildCode } from '../types/guild.type.js';
-import { CreateGuildDto } from '../dto/create-guild.dto.js';
+import { CreateGuildDto } from '../dto/req/create-guild.dto.js';
 import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
-import { GuildQueryService } from './guild-query.service.js';
-import { TokensWithPayload, UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
+import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
 import { UserService } from '#src/user/services/user.service.js';
 import { UserGuildService } from '#src/user/services/user-guild.service.js';
 import { Counter, CounterDocument } from '#src/common/schemas/counter.schema.js';
 
-//길드 
+/**길드 생성 및 삭제에 관여하는 서비스 */
 @Injectable()
 export class GuildLifecycleService {
     constructor(
@@ -58,7 +54,7 @@ export class GuildLifecycleService {
 
             const savedGuild = await newGuild.save({ session });
 
-            
+
 
             // --- feat.user ---
             await this.userGuildService.updateGuildInfo(
@@ -75,7 +71,7 @@ export class GuildLifecycleService {
 
         } catch (error) {
             if (error.code === 11000)
-            await session.abortTransaction();
+                await session.abortTransaction();
             // 여기서 실패해도 카운터는 이미 올라갔으므로 '번호 구멍'이 생김 (노상관)
             throw error;
         } finally {
