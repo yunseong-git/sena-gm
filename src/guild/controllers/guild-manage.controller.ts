@@ -1,5 +1,5 @@
 import { Body, Controller, Patch, Post, Res, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 //services
 import { UserService } from '#src/user/services/user.service.js';
 import { AuthService } from '#src/auth/auth.service.js';
@@ -18,6 +18,7 @@ import { Types } from 'mongoose';
 import { ACCESS_COOKIE_OPTION } from '#src/common/constatnts/cookie.constant.js';
 import type { Response } from 'express';
 import { GuildStrictGuard } from '#src/common/guards/guild-strict.guard.js';
+import { AuthResponseDto } from '#src/auth/dto/res/auth-res.dto.js';
 
 //타인의 데이터를 건드리는 경우
 @ApiTags('Guild - Managements')
@@ -31,23 +32,30 @@ export class GuildManageController {
     private readonly authService: AuthService,
   ) { }
 
+  @ApiOperation({ summary: '마스터 위임', description: '마스터만 가능하며, 부마스터 대상으로만 가능합니다.' })
+  @ApiResponse({ status: 200, description: '마스터 위임 성공', type: AuthResponseDto })
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
-  @Patch()
+  @Patch('master')
   async setMaster(@User() user: UserPayload, @Body() dto: UpdateRoleDto) {
     const targetId = new Types.ObjectId(dto.targetId)
 
     await this.guildRoleService.setMaster(user, targetId)
   }
 
+  @ApiOperation({ summary: '매니저 위임', description: '마스터 또는 부마스터만 가능하며, 매니저 대상으로만 가능합니다.' })
+  @ApiResponse({ status: 200, description: '부 마스터 위임 성공', type: AuthResponseDto })
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER, GUILD_ROLE_ENUM.SUBMASTER)
-  @Patch()
+  @Patch('managers')
   async setManagers(@User() user: UserPayload, @Body() dto: UpdateRoleDto) {
     const targetId = new Types.ObjectId(dto.targetId)
 
     await this.guildRoleService.setManager(user, targetId)
   }
+
+  @ApiOperation({ summary: '부 마스터 위임', description: '마스터 또는 부마스터만 가능하며, 매니저 대상으로만 가능합니다.' })
+  @ApiResponse({ status: 200, description: '부 마스터 위임 성공', type: AuthResponseDto })
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
-  @Patch()
+  @Patch('submaster')
   async setSubMaster(@User() user: UserPayload, @Body() dto: UpdateRoleDto, @Res({ passthrough: true }) res: Response) {
     const targetId = new Types.ObjectId(dto.targetId)
 
@@ -62,8 +70,10 @@ export class GuildManageController {
     }
   }
 
-  @Guild_Roles(GUILD_ROLE_ENUM.MASTER, GUILD_ROLE_ENUM.SUBMASTER)
-  @Post()
+  @ApiOperation({ summary: '멤버 추방', description: '마스터만 가능하며, 마스터 제외 전체 대상으로 가능합니다.' })
+  @ApiResponse({ status: 200, description: '추방 성공', type: AuthResponseDto })
+  @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
+  @Patch('kick')
   async kickMember(@User() user: UserPayload, @Body() dto: UpdateRoleDto) {
     const targetId = new Types.ObjectId(dto.targetId)
 
