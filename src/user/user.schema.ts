@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { UserGuildInfo, UserGuildInfoSchema } from './profile/schemas/user-guild.schema.js';
 import { GUILD_ROLE_ENUM } from '#src/guild/schemas/guild.schema.js';
 
 // 유저의 역할을 정의하는 Enum. 확장성을 위해 배열로 관리합니다.

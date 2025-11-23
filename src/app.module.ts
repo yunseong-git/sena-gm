@@ -5,7 +5,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
-import { DeckModule } from './deck/deck.module.js';
 import { GuildModule } from './guild/guild.module.js';
 import { HeroModule } from './hero/hero.module.js';
 import { RedisModule } from './redis/redis.module.js';
@@ -32,7 +31,6 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
     }),
     UserModule,
     HeroModule,
-    DeckModule,
     AuthModule,
     GuildModule,
     RedisModule,

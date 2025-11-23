@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Res, } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 //services
 import { GuildLifecycleService } from '../services/guild-lifecycle.service.js';
 import { GuildMemberShipService } from '../services/guild-membership.service.js';
@@ -30,6 +30,7 @@ export class GuildPublicController {
     //--- for public ---
     @Post()
     @ApiOperation({ summary: '길드 생성', description: '길드를 생성하고, 변경된 권한(Master)이 적용된 새 토큰을 발급.' })
+    @ApiBody({ type: CreateGuildDto })
     @ApiResponse({ status: 201, description: '길드 생성 성공', type: AuthResponseDto })
     @ApiResponse({ status: 409, description: '이미 가입된 길드가 있거나 태그 생성 충돌' })
     async create(
@@ -47,6 +48,7 @@ export class GuildPublicController {
 
     @Post('join')
     @ApiOperation({ summary: '길드 가입', description: '초대 코드를 통해 길드에 가입하고, 변경된 길드정보가 적용된 새 토큰을 발급.' })
+    @ApiBody({ type: JoinGuildDto })
     @ApiResponse({ status: 201, description: '가입 성공', type: AuthResponseDto })
     @ApiResponse({ status: 404, description: '존재하지 않는 코드' })
     @ApiResponse({ status: 409, description: '이미 길드 가입됨 / 정원 초과' })

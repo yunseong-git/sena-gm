@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 
 //schemas
 import { User, User_Role_Enum, UserDocument } from '../user.schema.js';
-import { CreateGoogleUserDto } from '../create-user.dto.js';
+import { CreateGoogleUserDto } from '../dto/req/create-user.dto.js';
 import { Counter, CounterDocument } from '#src/common/schemas/counter.schema.js';
 
 @Injectable()

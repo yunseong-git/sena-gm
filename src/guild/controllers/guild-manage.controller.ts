@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Res, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 //services
 import { UserService } from '#src/user/services/user.service.js';
 import { AuthService } from '#src/auth/auth.service.js';
@@ -40,6 +40,7 @@ export class GuildManageController {
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
   @Patch('master')
   @ApiOperation({ summary: '마스터 위임', description: '마스터만 가능하며, 부마스터 대상으로만 가능합니다.' })
+  @ApiBody({ type: UpdateRoleDto })
   @ApiResponse({ status: 200, description: '마스터 위임 성공' })
   @ApiResponse({ status: 400, description: '잘못된 요청 (자신에게 위임, 대상이 부마스터 아님)' })
   @ApiResponse({ status: 503, description: '서버 문제로 처리 불가 (Redis)' })
@@ -62,6 +63,7 @@ export class GuildManageController {
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER, GUILD_ROLE_ENUM.SUBMASTER)
   @Patch('managers')
   @ApiOperation({ summary: '매니저 위임', description: '마스터 또는 부마스터만 가능하며, 매니저 대상으로만 가능합니다.' })
+  @ApiBody({ type: UpdateRoleDto })
   @ApiResponse({ status: 200, description: '매니저 임명 성공' })
   @ApiResponse({ status: 400, description: '잘못된 요청 (타길드원, 이미 임원진)' })
   @ApiResponse({ status: 404, description: '길드가 없거나 매니저 정원 초과' })
@@ -78,6 +80,7 @@ export class GuildManageController {
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
   @Patch('submaster')
   @ApiOperation({ summary: '부 마스터 위임', description: '마스터 또는 부마스터만 가능하며, 매니저 대상으로만 가능합니다.' })
+  @ApiBody({ type: UpdateRoleDto })
   @ApiResponse({ status: 200, description: '위임 성공', type: AuthResponseDto })
   @ApiResponse({ status: 400, description: '잘못된 요청 (자신에게 위임, 대상이 매니저 아님)' })
   @ApiResponse({ status: 403, description: '권한 없음' })
@@ -99,14 +102,15 @@ export class GuildManageController {
     return { payload };
   }
 
+  @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
+  @Patch('kick')
   @ApiOperation({ summary: '멤버 추방', description: '마스터만 가능하며, 마스터 제외 전체 대상으로 가능합니다.' })
+  @ApiBody({ type: UpdateRoleDto })
   @ApiResponse({ status: 200, description: '길드원 추방 성공' })
   @ApiResponse({ status: 400, description: '잘못된 요청 (자신/타길드원/마스터 추방 시도)' })
   @ApiResponse({ status: 403, description: '추방 권한 없음' })
   @ApiResponse({ status: 404, description: '길드 정보를 찾을 수 없음' })
   @ApiResponse({ status: 503, description: '서버 문제로 처리 불가 (Redis)' })
-  @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
-  @Patch('kick')
   async kickMember(
     @User() user: UserPayload,
     @Body() dto: UpdateRoleDto)
@@ -121,6 +125,7 @@ export class GuildManageController {
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER, GUILD_ROLE_ENUM.SUBMASTER)
   @Get('code')
   @ApiOperation({ summary: '초대 코드 조회' })
+  @ApiBody({ type: UpdateGuildTagDto })
   @ApiResponse({ status: 200, description: '코드 조회 성공', type: GuildCodeResDto })
   @ApiResponse({ status: 404, description: '길드가 없거나 코드가 없음' })
   async getCode(@User() user: UserPayload)
@@ -131,6 +136,7 @@ export class GuildManageController {
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER, GUILD_ROLE_ENUM.SUBMASTER)
   @Patch('code')
   @ApiOperation({ summary: '초대 코드 재생성', description: '기존 코드를 만료시키고 새 코드를 발급합니다.' })
+  @ApiBody({ type: UpdateGuildTagDto })
   @ApiResponse({ status: 200, description: '코드 갱신 성공', type: GuildCodeResDto })
   @ApiResponse({ status: 409, description: '코드 생성 충돌 (재시도 필요)' })
   async updateCode(@User() user: UserPayload)
@@ -140,8 +146,9 @@ export class GuildManageController {
 
   // --- other resources ---
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
-  @Post('tag')
+  @Post('check-tag') //body dto사용을 위해 post메소드 사용
   @ApiOperation({ summary: '태그 중복확인', description: '중복이면 isExist: true를 반환합니다.' })
+  @ApiBody({ type: UpdateGuildTagDto })
   @ApiResponse({ status: 200, description: '태그 변경 성공' })
   @ApiResponse({ status: 404, description: '길드 정보를 찾을 수 없음' })
   @ApiResponse({ status: 409, description: '이미 사용 중인 태그' })
@@ -154,8 +161,9 @@ export class GuildManageController {
   }
 
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER)
-  @Patch('check-tag')
+  @Patch('tag')
   @ApiOperation({ summary: '태그 변경', description: '길드 태그를 변경합니다. (중복 시 에러)' })
+  @ApiBody({ type: UpdateGuildTagDto })
   @ApiResponse({ status: 200, description: '변경 성공' })
   @ApiResponse({ status: 409, description: '이미 존재하는 태그' })
   async updateTag(
@@ -168,6 +176,7 @@ export class GuildManageController {
   @Guild_Roles(GUILD_ROLE_ENUM.MASTER, GUILD_ROLE_ENUM.SUBMASTER)
   @Patch('notice')
   @ApiOperation({ summary: '공지사항 변경' })
+  @ApiBody({ type: UpdateGuildNoticeDto })
   @ApiResponse({ status: 200, description: '공지사항 수정 성공' })
   @ApiResponse({ status: 404, description: '길드 정보를 찾을 수 없음' })
   async updateNotice(

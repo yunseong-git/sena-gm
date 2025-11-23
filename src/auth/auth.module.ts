@@ -1,8 +1,7 @@
-import { Global, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
-import { StatePatchGuard } from '../common/guards/state-patch.guard.js';
 import { User, UserSchema } from '#src/user/user.schema.js';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
