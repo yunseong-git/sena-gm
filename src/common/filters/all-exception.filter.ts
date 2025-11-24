@@ -20,26 +20,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    // 1. 에러 정보 추출
+    // 에러 정보 추출
     const request = ctx.getRequest();
     const response = ctx.getResponse();
     const path = httpAdapter.getRequestUrl(request);
     const method = httpAdapter.getRequestMethod(request);
     const user = request.user ? request.user.nickname : 'Anonymous'; // 로그인 정보가 있다면
 
-    // 2. 에러 메시지 구성
+    // 에러 메시지 구성
     const errorMessage = exception instanceof Error ? exception.message : String(exception);
     const stack = exception instanceof Error ? exception.stack : '';
 
-    // 3. [중요] 500번대 에러(서버 터짐)일 때만 알림 보내기 (400번대 유저 실수 제외)
+    // 500번대 에러(서버 터짐)일 때만 알림 보내기 (400번대 유저 실수 제외)
     if (httpStatus >= 500) {
-      this.sendDiscordAlert(method, path, user, errorMessage, stack);
+      this.sendDiscordAlert(method, path, user, errorMessage, stack!); //todo
       this.logger.error(`[${method}] ${path} - ${errorMessage}`, stack);
     } else {
       this.logger.warn(`[${method}] ${path} - ${errorMessage}`);
     }
 
-    // 4. 클라이언트에게 응답
+    // 클라이언트에게 응답
     const responseBody = {
       statusCode: httpStatus,
       timestamp: new Date().toISOString(),
@@ -56,7 +56,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const content = {
       embeds: [{
-        title: ` Sena-gm 서버 에러 발생!`,
+        title: ` SenaGm 서버 에러 발생!`,
         color: 15548997, // 빨강
         fields: [
           { name: 'User', value: user, inline: true },

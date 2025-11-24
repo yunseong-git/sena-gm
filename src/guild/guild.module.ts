@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 //db
 import { MongooseModule } from '@nestjs/mongoose';
 import { Guild, GuildSchema } from './schemas/guild.schema.js';
-import { User, UserSchema } from '#src/user/user.schema.js';
 //services
 import { GuildLifecycleService } from './services/guild-lifecycle.service.js';
 import { GuildMemberShipService } from './services/guild-membership.service.js';
@@ -25,7 +24,6 @@ import { UserModule } from '#src/user/user.module.js';
   imports: [
     MongooseModule.forFeature([
       { name: Guild.name, schema: GuildSchema },
-      { name: User.name, schema: UserSchema }
     ]),
     RedisModule,
     AuthModule,

@@ -14,18 +14,20 @@ import { AuthResponseDto } from '#src/auth/dto/res/auth-res.dto.js';
 //decoraters,guards
 import { User } from '#src/common/decorators/user.decorators.js';
 import { Guild_Roles } from '#src/common/decorators/guild-roles.decorator.js';
-import { GuildStrictGuard } from '#src/common/guards/guild-strict.guard.js';
 //others
 import { GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
 import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
 import { Types } from 'mongoose';
 import { ACCESS_COOKIE_OPTION } from '#src/common/constatnts/cookie.constant.js';
 import type { Response } from 'express';
+import { GuildGuard } from '#src/common/guards/guild.guard.js';
+import { Strict } from '#src/common/decorators/strict.decorator.js';
 
 /*타인의 데이터를 건드리는 경우(권한변경, 추방), 리소스 변경 컨트롤러*/
 @ApiTags('Guild - Managements')
 @Controller('guild/management')
-@UseGuards(GuildStrictGuard)
+@UseGuards(GuildGuard)
+@Strict()
 export class GuildManageController {
   constructor(
     private readonly guildRoleService: GuildRoleService,

@@ -1,10 +1,10 @@
 import { IsArray, IsEnum, IsNotEmpty, IsString, ValidateNested, } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SKILL_TYPE_ENUM } from '../schemas/hero.schema.js';
+import { HERO_SKILL_ENUM } from '../schemas/hero.schema.js';
 
 export class SkillDto {
-    @IsEnum(SKILL_TYPE_ENUM)
-    skillIndex: SKILL_TYPE_ENUM;
+    @IsEnum(HERO_SKILL_ENUM)
+    skillIndex: HERO_SKILL_ENUM;
 
     @IsString()
     @IsNotEmpty()

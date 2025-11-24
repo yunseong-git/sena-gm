@@ -4,12 +4,12 @@ import { CreateHeroDto } from '../dto/create-hero.dto.js';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { UpdateHeroDto } from '../dto/update-hero.dto.js';
 import { Public } from '#src/common/decorators/public.decorators.js';
-import { UserRoleGuard } from '#src/common/guards/user-role.guard.js';
+import { AdminGuard } from '#src/common/guards/admin.guard.js';
 import { UserRoles } from '#src/common/decorators/user-roles.decorator.js';
 import { User_Role_Enum } from '#src/user/user.schema.js';
 
 
-@UseGuards(UserRoleGuard)
+@UseGuards(AdminGuard)
 @UserRoles(User_Role_Enum.ADMIN)
 @Controller('hero-admin')
 export class HeroAdminController {
@@ -28,11 +28,10 @@ export class HeroAdminController {
         return this.heroService.update(id, updateHeroDto);
     }
 
-
-    @Public() // 2. 전역 JWT 가드를 우회
-    @Post('seed') // 3. POST /hero/seed 엔드포인트
+    @Public() 
+    @Post('seed') 
     @HttpCode(HttpStatus.OK)
     async seedHeroes() {
-        return this.heroService.seedHeroes();
+        return this.heroService.seed();
     }
 }

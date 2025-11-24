@@ -4,7 +4,9 @@ import { RedisService } from '#src/redis/redis.service.js';
 import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
 import { GUILD_ROLES_KEY } from '../decorators/guild-roles.decorator.js';
 import { GUILD_ROLE_ENUM } from '#src/guild/schemas/guild.schema.js';
+import { IS_STRICT_KEY } from '../decorators/strict.decorator.js';
 
+/**(strict 여부에 따라 분기처리)redis의 state-patch list를 확인하여 refresh를 유도하고, 통과시 GuildRole 데코레이터의 역할값과 비교하여 "인가"하는 가드 */
 @Injectable()
 export class GuildGuard implements CanActivate {
   constructor(
@@ -18,20 +20,34 @@ export class GuildGuard implements CanActivate {
 
     if (!user) throw new UnauthorizedException('로그인 정보가 없습니다.');
 
-    // 1. [Safe] Redis 상태 변경 확인 (Redis 죽으면 null 반환 -> 통과)
+    // Strict 여부 확인
+    const isStrict = this.reflector.getAllAndOverride<boolean>(IS_STRICT_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    // Redis 상태 변경 확인 (분기 처리)
     const stateKey = `user:state-patch:${user.id}`;
-    const isStateChanged = await this.redisService.safeGet(stateKey);
+    let isStateChanged: string | null;
+
+    if (isStrict) {
+      // [Strict] Redis 죽으면 에러 (Fail-Closed)
+      isStateChanged = await this.redisService.getOrThrow(stateKey);
+    } else {
+      // [Safe] Redis 죽으면 무시 (Fail-Open)
+      isStateChanged = await this.redisService.safeGet(stateKey);
+    }
 
     if (isStateChanged) {
       throw new UnauthorizedException('회원 정보가 변경되어 다시 로그인이 필요합니다.');
     }
 
-    // 2. 길드 멤버십 확인
+    // 길드 멤버십 확인 (공통)
     if (!user.guildId || !user.guildRole) {
       throw new ForbiddenException('길드에 소속되어 있지 않습니다.');
     }
 
-    // 3. 역할(Role) 권한 확인
+    // 역할(Role) 권한 확인 (공통)
     const requiredRoles = this.reflector.getAllAndOverride<GUILD_ROLE_ENUM[]>(GUILD_ROLES_KEY, [
       context.getHandler(),
       context.getClass(),

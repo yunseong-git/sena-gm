@@ -4,8 +4,9 @@ import { ROLES_KEY } from '../decorators/user-roles.decorator.js';
 import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
 import { User_Role_Enum } from '#src/user/user.schema.js';
 
+/**UserRole 데코레이터의 역할값과 비교하여 관리자를 "인가"하는가드 */
 @Injectable()
-export class UserRoleGuard implements CanActivate {
+export class AdminGuard implements CanActivate {
   constructor(private reflector: Reflector) { }
 
   canActivate(context: ExecutionContext): boolean {
@@ -23,18 +24,16 @@ export class UserRoleGuard implements CanActivate {
     // 유저 정보 가져오기
     const user = context.switchToHttp().getRequest() as UserPayload;
 
-    // 방어 코드] 유저 정보가 없으면 (로그인 안 함) 차단
-    // (전역 AuthGuard가 있더라도 여기서 한 번 더 막는 게 안전합니다)
+    // 유저 정보가 없으면 차단(최종방어)
     if (!user) {
       throw new UnauthorizedException('로그인 정보가 없습니다.');
     }
 
-    // 역할 검사 (Enum 비교)
-    // user.userRole이 requiredRoles 배열에 포함되어 있는지 확인
+    // 역할 검사 (Enum 비교) user.userRole이 requiredRoles 배열에 포함되어 있는지 확인
     const hasRole = requiredRoles.some((role) => user.userRole === role);
 
     if (!hasRole) {
-      throw new ForbiddenException('관리자 권한이 필요합니다.'); // 👈 명확한 에러 메시지
+      throw new ForbiddenException('관리자 권한이 필요합니다.');
     }
 
     return true;

@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateHeroDto } from './dto/create-hero.dto.js';
 import { HeroesData } from './heroes.data.js';
-import { Hero, HeroDocument } from './schemas/hero.schema.js';
+import { Hero, HeroDocument, RankOrder, TypeOrder } from './schemas/hero.schema.js';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { UpdateHeroDto } from './dto/update-hero.dto.js';
@@ -27,7 +27,22 @@ export class HeroService {
   }
 
   async findAll(): Promise<Hero[]> {
-    return await this.heroModel.find().lean().exec();
+    const heroes = await this.heroModel.find().lean().exec();
+
+    return heroes.sort((a, b) => {
+      // [1단계] 등급 비교
+      const rankA = RankOrder[a.rank] ?? 99;
+      const rankB = RankOrder[b.rank] ?? 99;
+      if (rankA !== rankB) return rankA - rankB;
+
+      // [2단계] 타입 비교
+      const typeA = TypeOrder[a.type] ?? 99;
+      const typeB = TypeOrder[b.type] ?? 99;
+      if (typeA !== typeB) return typeA - typeB;
+
+      // [3단계] 이름 가나다순 비교
+      return a.name.localeCompare(b.name, 'ko');
+    });
   }
 
   async create(createHeroDto: CreateHeroDto): Promise<HeroDocument> {

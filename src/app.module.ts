@@ -11,24 +11,33 @@ import { RedisModule } from './redis/redis.module.js';
 import { UserModule } from './user/user.module.js';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
+import * as Joi from 'joi';
 
 
 @Module({
   imports: [
-    // 1. ConfigModule 설정
+    // 환경변수 전역설정 및 점검
     ConfigModule.forRoot({
-      isGlobal: true, // 앱 전체에서 ConfigService를 사용할 수 있도록 설정
-    }),
-    // 2. MongooseModule을 비동기 방식으로 설정
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule], // MongooseModule에서 ConfigModule을 사용하도록 주입
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI'), // .env 파일의 MONGO_URI 값을 가져옴
-        // useNewUrlParser: true, // 최신 Mongoose에서는 기본값
-        // useUnifiedTopology: true,
+      isGlobal: true,
+      envFilePath: '.env',
+      validationSchema: Joi.object({
+        MONGO_URI: Joi.string().required(),
+        JWT_ACCESS_SECRET: Joi.string().required(),
+        JWT_ACCESS_EXPIRATION: Joi.number().required(),
+        JWT_REFRESH_SECRET: Joi.string().required(),
+        JWT_REFRESH_EXPIRATION: Joi.number().required(),
+        BCRYPT_SALT_ROUNDS: Joi.number().required(),
       }),
-      inject: [ConfigService], // useFactory에 ConfigService를 주입
     }),
+    // DB connection
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.getOrThrow<string>('MONGO_URI'),
+      }),
+      inject: [ConfigService],
+    }),
+    //modules
     UserModule,
     HeroModule,
     AuthModule,
@@ -40,7 +49,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
   ],
   providers: [
     AppService,
-    {
+    { //전역가드
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
