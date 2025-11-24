@@ -1,6 +1,6 @@
-import { GUILD_ROLE_ENUM } from "#src/guild/schemas/guild.schema.js";
-import { User_Role_Enum } from "#src/user/user.schema.js";
 import { Types } from "mongoose";
+import { GUILD_ROLE_ENUM } from "../../guild/schemas/guild.schema";
+import { User_Role_Enum } from "../../user/schemas/user.schema";
 
 // --- 1. Base Token Types (기본 블록) ---
 

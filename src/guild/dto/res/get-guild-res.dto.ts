@@ -1,4 +1,4 @@
-import { GuildDocument } from '#src/guild/schemas/guild.schema.js';
+import { GuildDocument } from "../../schemas/guild.schema";
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SimpleGuildResDto {

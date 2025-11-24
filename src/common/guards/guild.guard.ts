@@ -1,10 +1,10 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { RedisService } from '#src/redis/redis.service.js';
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
-import { GUILD_ROLES_KEY } from '../decorators/guild-roles.decorator.js';
-import { GUILD_ROLE_ENUM } from '#src/guild/schemas/guild.schema.js';
-import { IS_STRICT_KEY } from '../decorators/strict.decorator.js';
+import { GUILD_ROLES_KEY } from '../decorators/guild-roles.decorator';
+import { IS_STRICT_KEY } from '../decorators/strict.decorator';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
+import { GUILD_ROLE_ENUM } from '../../guild/schemas/guild.schema';
+import { RedisService } from '../../redis/redis.service';
 
 /**(strict 여부에 따라 분기처리)redis의 state-patch list를 확인하여 refresh를 유도하고, 통과시 GuildRole 데코레이터의 역할값과 비교하여 "인가"하는 가드 */
 @Injectable()

@@ -1,8 +1,8 @@
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module.js';
+import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
-import { AllExceptionsFilter } from './common/filters/all-exception.filter.js';
+import { AllExceptionsFilter } from './common/filters/all-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {

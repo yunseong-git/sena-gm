@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { HeroService } from './hero.service.js';
-import { HeroController } from './controllers/hero.controller.js';
+import { HeroService } from './hero.service';
+import { HeroController } from './controllers/hero.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Hero, HeroSchema } from './schemas/hero.schema.js';
+import { Hero, HeroSchema } from './schemas/hero.schema';
 
 @Module({
   imports: [
@@ -11,4 +11,4 @@ import { Hero, HeroSchema } from './schemas/hero.schema.js';
   controllers: [HeroController],
   providers: [HeroService],
 })
-export class HeroModule {}
+export class HeroModule { }

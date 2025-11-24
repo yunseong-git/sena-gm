@@ -1,9 +1,9 @@
 import { Global, Module } from '@nestjs/common';
-import { UserController } from './user.controller.js';
+import { UserController } from './user.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './user.schema.js';
-import { UserService } from './services/user.service.js';
-import { UserGuildService } from './services/user-guild.service.js';
+import { User, UserSchema } from './schemas/user.schema';
+import { UserService } from './services/user.service';
+import { UserGuildService } from './services/user-guild.service';
 
 @Global()
 @Module({

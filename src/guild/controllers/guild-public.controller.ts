@@ -1,20 +1,20 @@
 import { Body, Controller, Post, Res, } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 //services
-import { GuildLifecycleService } from '../services/guild-lifecycle.service.js';
-import { GuildMemberShipService } from '../services/guild-membership.service.js';
-import { UserService } from '#src/user/services/user.service.js';
-import { AuthService } from '#src/auth/auth.service.js';
+import { GuildLifecycleService } from '../services/guild-lifecycle.service';
+import { GuildMemberShipService } from '../services/guild-membership.service';
+
 //decorators, guards
-import { User } from '#src/common/decorators/user.decorators.js';
+import { User } from '../../common/decorators/user.decorators';
 //dtos
-import { CreateGuildDto } from '../dto/req/create-guild.dto.js';
-import { JoinGuildDto } from '../dto/req/join-guild.dto.js';
-import { AuthResponseDto } from '#src/auth/dto/res/auth-res.dto.js';
-//others
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
-import { ACCESS_COOKIE_OPTION } from '#src/common/constatnts/cookie.constant.js';
+import { CreateGuildDto } from '../dto/req/create-guild.dto';
+import { JoinGuildDto } from '../dto/req/join-guild.dto';
 import type { Response } from 'express';
+import { AuthService } from '../../auth/auth.service';
+import { AuthResponseDto } from '../../auth/dto/res/auth-res.dto';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
+import { ACCESS_COOKIE_OPTION } from '../../common/constatnts/cookie.constant';
+import { UserService } from '../../user/services/user.service';
 
 /**길드 미가입 상태에서도 접근가능한 컨트롤러 */
 @ApiTags('Guild - Public')

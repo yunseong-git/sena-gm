@@ -2,7 +2,7 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorators.js';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorators';
 
 /**전역으로 로그인 유저를 "인증"하는 가드, 우회 시 public 데코레이터 사용 */
 @Injectable()

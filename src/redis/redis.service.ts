@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import * as ioredis from 'ioredis';
 import { Types } from 'mongoose';
-import { REDIS_CLIENT } from '../common/constatnts/redis.constant.js';
+import { REDIS_CLIENT } from '../common/constatnts/redis.constant';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()

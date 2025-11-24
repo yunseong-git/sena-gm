@@ -2,13 +2,13 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException }
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Connection } from 'mongoose';
-import { RedisService } from '#src/redis/redis.service.js';
-import { CreateGuildDto } from '../dto/req/create-guild.dto.js';
-import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
-import { UserService } from '#src/user/services/user.service.js';
-import { UserGuildService } from '#src/user/services/user-guild.service.js';
-import { Counter, CounterDocument } from '#src/common/schemas/counter.schema.js';
+import { CreateGuildDto } from '../dto/req/create-guild.dto';
+import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
+import { Counter, CounterDocument } from '../../common/schemas/counter.schema';
+import { RedisService } from '../../redis/redis.service';
+import { UserGuildService } from '../../user/services/user-guild.service';
+import { UserService } from '../../user/services/user.service';
 
 /**길드 생성 및 삭제에 관여하는 서비스 */
 @Injectable()

@@ -5,9 +5,9 @@ import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 
 //schemas
-import { User, User_Role_Enum, UserDocument } from '../user.schema.js';
-import { CreateGoogleUserDto } from '../dto/req/create-user.dto.js';
-import { Counter, CounterDocument } from '#src/common/schemas/counter.schema.js';
+import { User, User_Role_Enum, UserDocument } from '../schemas/user.schema';
+import { CreateGoogleUserDto } from '../dto/req/create-user.dto';
+import { Counter, CounterDocument } from '../../common/schemas/counter.schema';
 
 @Injectable()
 export class UserService {

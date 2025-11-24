@@ -1,12 +1,12 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, UseGuards, ValidationPipe } from '@nestjs/common';
-import { HeroService } from '../hero.service.js';
-import { CreateHeroDto } from '../dto/create-hero.dto.js';
+import { HeroService } from '../hero.service';
+import { CreateHeroDto } from '../dto/create-hero.dto';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
-import { UpdateHeroDto } from '../dto/update-hero.dto.js';
-import { Public } from '#src/common/decorators/public.decorators.js';
-import { AdminGuard } from '#src/common/guards/admin.guard.js';
-import { UserRoles } from '#src/common/decorators/user-roles.decorator.js';
-import { User_Role_Enum } from '#src/user/user.schema.js';
+import { UpdateHeroDto } from '../dto/update-hero.dto';
+import { Public } from '../../common/decorators/public.decorators';
+import { UserRoles } from '../../common/decorators/user-roles.decorator';
+import { AdminGuard } from '../../common/guards/admin.guard';
+import { User_Role_Enum } from '../../user/schemas/user.schema';
 
 
 @UseGuards(AdminGuard)
@@ -28,8 +28,8 @@ export class HeroAdminController {
         return this.heroService.update(id, updateHeroDto);
     }
 
-    @Public() 
-    @Post('seed') 
+    @Public()
+    @Post('seed')
     @HttpCode(HttpStatus.OK)
     async seedHeroes() {
         return this.heroService.seed();

@@ -1,24 +1,24 @@
 import { Controller, Delete, Get, Patch, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 //services
-import { UserService } from '#src/user/services/user.service.js';
-import { AuthService } from '#src/auth/auth.service.js';
-import { GuildLifecycleService } from '../services/guild-lifecycle.service.js';
-import { GuildMemberShipService } from '../services/guild-membership.service.js';
-import { GuildQueryService } from '../services/guild-query.service.js';
+import { GuildLifecycleService } from '../services/guild-lifecycle.service';
+import { GuildMemberShipService } from '../services/guild-membership.service';
+import { GuildQueryService } from '../services/guild-query.service';
 //dtos
-import { AuthResponseDto } from '#src/auth/dto/res/auth-res.dto.js';
-import { GuildMemberResDto } from '../dto/res/get-members-res.dto.js';
-import { SimpleGuildResDto } from '../dto/res/get-guild-res.dto.js';
+import { GuildMemberResDto } from '../dto/res/get-members-res.dto';
+import { SimpleGuildResDto } from '../dto/res/get-guild-res.dto';
 //decorators, guards
-import { User } from '#src/common/decorators/user.decorators.js';
-import { GuildGuard } from '#src/common/guards/guild.guard.js';
-import { Guild_Roles } from '#src/common/decorators/guild-roles.decorator.js';
+import { User } from '../../common/decorators/user.decorators';
 //others
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
-import { GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
-import { ACCESS_COOKIE_OPTION } from '#src/common/constatnts/cookie.constant.js';
 import type { Response } from 'express';
+import { AuthService } from '../../auth/auth.service';
+import { AuthResponseDto } from '../../auth/dto/res/auth-res.dto';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
+import { ACCESS_COOKIE_OPTION } from '../../common/constatnts/cookie.constant';
+import { Guild_Roles } from '../../common/decorators/guild-roles.decorator';
+import { GuildGuard } from '../../common/guards/guild.guard';
+import { UserService } from '../../user/services/user.service';
+import { GUILD_ROLE_ENUM } from '../schemas/guild.schema';
 
 /** 길드의 기본적인 작업 컨트롤러 */
 @ApiTags('Guild - member')

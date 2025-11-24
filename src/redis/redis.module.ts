@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config'; // ConfigService를 임포트합니다.
 import * as ioredis from 'ioredis';
-import { RedisService } from './redis.service.js';
-import { REDIS_CLIENT } from '../common/constatnts/redis.constant.js';
+import { RedisService } from './redis.service';
+import { REDIS_CLIENT } from '../common/constatnts/redis.constant';
 
 @Module({
   providers: [

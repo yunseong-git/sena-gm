@@ -1,27 +1,28 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 //services
-import { UserService } from '#src/user/services/user.service.js';
-import { AuthService } from '#src/auth/auth.service.js';
-import { GuildResourceService } from '../services/guild-resource.service.js';
-import { GuildRoleService } from '../services/guild-role.service.js';
-import { GuildMemberShipService } from '../services/guild-membership.service.js';
+
+import { GuildResourceService } from '../services/guild-resource.service';
+import { GuildRoleService } from '../services/guild-role.service';
+import { GuildMemberShipService } from '../services/guild-membership.service';
 //dtos
-import { UpdateRoleDto } from '../dto/req/update-role.dto.js';
-import { UpdateGuildNoticeDto, UpdateGuildTagDto } from '../dto/req/update-guild.dto.js';
-import { checkGuildTagResDto, GuildCodeResDto } from '../dto/res/update-guild-res.dto.js';
-import { AuthResponseDto } from '#src/auth/dto/res/auth-res.dto.js';
+import { UpdateRoleDto } from '../dto/req/update-role.dto';
+import { UpdateGuildNoticeDto, UpdateGuildTagDto } from '../dto/req/update-guild.dto';
+import { checkGuildTagResDto, GuildCodeResDto } from '../dto/res/update-guild-res.dto';
 //decoraters,guards
-import { User } from '#src/common/decorators/user.decorators.js';
-import { Guild_Roles } from '#src/common/decorators/guild-roles.decorator.js';
+import { User } from '../../common/decorators/user.decorators';
 //others
-import { GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
+import { GUILD_ROLE_ENUM } from '../schemas/guild.schema';
 import { Types } from 'mongoose';
-import { ACCESS_COOKIE_OPTION } from '#src/common/constatnts/cookie.constant.js';
 import type { Response } from 'express';
-import { GuildGuard } from '#src/common/guards/guild.guard.js';
-import { Strict } from '#src/common/decorators/strict.decorator.js';
+import { AuthResponseDto } from '../../auth/dto/res/auth-res.dto';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
+import { ACCESS_COOKIE_OPTION } from '../../common/constatnts/cookie.constant';
+import { Guild_Roles } from '../../common/decorators/guild-roles.decorator';
+import { Strict } from '../../common/decorators/strict.decorator';
+import { GuildGuard } from '../../common/guards/guild.guard';
+import { AuthService } from '../../auth/auth.service';
+import { UserService } from '../../user/services/user.service';
 
 /*타인의 데이터를 건드리는 경우(권한변경, 추방), 리소스 변경 컨트롤러*/
 @ApiTags('Guild - Managements')

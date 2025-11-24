@@ -1,17 +1,18 @@
 import { Controller, Get, Post, Body, Patch, Delete, HttpCode, HttpStatus, UseGuards, Res, Req, UnauthorizedException } from '@nestjs/common';
-import { AuthService } from './auth.service.js';
-import { User } from '#src/common/decorators/user.decorators.js';
+import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { RefreshingDto } from './dto/req/refreshing.dto.js';
+import { RefreshingDto } from './dto/req/refreshing.dto';
 import { Response } from 'express';
-import { Public } from '#src/common/decorators/public.decorators.js';
-import { ACCESS_COOKIE_OPTION, REFRESH_COOKIE_OPTION, REGISTER_COOKIE_OPTION } from '#src/common/constatnts/cookie.constant.js';
 import type { Request } from 'express';
 import { ApiBody, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthResponseDto } from './dto/res/auth-res.dto.js';
+import { AuthResponseDto } from './dto/res/auth-res.dto';
 import { ConfigService } from '@nestjs/config';
-import { JwtPayloadDto, UserPayloadDto } from './dto/res/payload.dto.js';
-import { RegisterDto } from './dto/req/register.dto.js';
+import { JwtPayloadDto, UserPayloadDto } from './dto/res/payload.dto';
+import { RegisterDto } from './dto/req/register.dto';
+import { Public } from '../common/decorators/public.decorators';
+import { ACCESS_COOKIE_OPTION, REFRESH_COOKIE_OPTION, REGISTER_COOKIE_OPTION } from '../common/constatnts/cookie.constant';
+import { User } from '../common/decorators/user.decorators';
+
 
 @ApiTags('Auth')
 @Controller('auth')

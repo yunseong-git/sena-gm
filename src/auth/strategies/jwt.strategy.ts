@@ -4,8 +4,8 @@ import { Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { Types } from 'mongoose';
 import type { Request } from 'express';
-import { JwtPayload, UserPayload } from '../interfaces/token-payload.interface.js';
-import { GUILD_ROLE_ENUM } from '#src/guild/schemas/guild.schema.js';
+import { JwtPayload, UserPayload } from '../interfaces/token-payload.interface';
+import { GUILD_ROLE_ENUM } from '../../guild/schemas/guild.schema';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {

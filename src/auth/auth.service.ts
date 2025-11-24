@@ -1,11 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserDocument } from '#src/user/user.schema.js';
 import { ConfigService } from '@nestjs/config';
-import { RedisService } from '#src/redis/redis.service.js';
-import { UserService } from '#src/user/services/user.service.js';
-import { GoogleAuthResult } from './interfaces/google.interface.js';
-import { TokensWithPayload, AccessTokenWithPayload, RefreshToken } from './interfaces/token-payload.interface.js';
+import { GoogleAuthResult } from './interfaces/google.interface';
+import { TokensWithPayload, AccessTokenWithPayload, RefreshToken } from './interfaces/token-payload.interface';
+import { RedisService } from '../redis/redis.service';
+import { UserDocument } from '../user/schemas/user.schema';
+import { UserService } from '../user/services/user.service';
 
 @Injectable()
 export class AuthService {
@@ -87,7 +87,7 @@ export class AuthService {
     return AccessTokenWithPayload;
   }
 
-  
+
 
   // --- about tokens ---
 
@@ -135,5 +135,5 @@ export class AuthService {
     return { refreshToken };
   }
 
-  
+
 }

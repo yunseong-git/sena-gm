@@ -1,7 +1,9 @@
-import { JwtPayload, UserPayload } from "#src/auth/interfaces/token-payload.interface.js";
-import { User_Role_Enum } from "#src/user/user.schema.js";
+
 import { ApiProperty } from "@nestjs/swagger";
-import { ObjectId, Types } from "mongoose";
+import { Types } from "mongoose";
+import { GUILD_ROLE_ENUM } from "../../../guild/schemas/guild.schema";
+import { User_Role_Enum } from "../../../user/schemas/user.schema";
+import { JwtPayload, UserPayload } from "../../interfaces/token-payload.interface";
 
 export class JwtPayloadDto implements JwtPayload {
   @ApiProperty({ description: '유저 ID' })
@@ -27,6 +29,6 @@ export class UserPayloadDto implements UserPayload {
   @ApiProperty({ description: '길드 ID', nullable: true, example: '...' })
   guildId: Types.ObjectId | null;
 
-  @ApiProperty({ description: '길드 내 역할', nullable: true, example: 'master' })
-  guildRole: string | null;
+  @ApiProperty({ description: '길드 내 역할', nullable: true, example: GUILD_ROLE_ENUM.MANAGER })
+  guildRole: GUILD_ROLE_ENUM | null;
 }

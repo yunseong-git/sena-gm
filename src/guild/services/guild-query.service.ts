@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '#src/guild/schemas/guild.schema.js';
-import { PopulatedMember } from '../interfaces/members.interface.js';
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
-import { User } from '#src/user/user.schema.js';
-import { GuildMemberResDto } from '../dto/res/get-members-res.dto.js';
-import { SimpleGuildResDto } from '../dto/res/get-guild-res.dto.js';
+import { GuildMemberResDto } from '../dto/res/get-members-res.dto';
+import { SimpleGuildResDto } from '../dto/res/get-guild-res.dto';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
+import { User } from '../../user/schemas/user.schema';
+import { PopulatedMember } from '../interfaces/members.interface';
+import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema';
 
 /**길드 조회 서비스 */
 @Injectable()

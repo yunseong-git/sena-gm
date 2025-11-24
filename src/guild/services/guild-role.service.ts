@@ -2,11 +2,11 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Connection } from 'mongoose';
-import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
-import { RedisService } from '#src/redis/redis.service.js';
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
-import { UserService } from '#src/user/services/user.service.js';
-import { UserGuildService } from '#src/user/services/user-guild.service.js';
+import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
+import { RedisService } from '../../redis/redis.service';
+import { UserGuildService } from '../../user/services/user-guild.service';
+import { UserService } from '../../user/services/user.service';
 
 /**길드 역할(권한) 변경 서비스 */
 @Injectable()

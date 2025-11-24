@@ -2,10 +2,10 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException }
 import { InjectModel, } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { nanoid } from 'nanoid';
-import { Guild, GuildDocument, } from '../schemas/guild.schema.js';
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
-import { UpdateGuildNoticeDto, UpdateGuildTagDto } from '../dto/req/update-guild.dto.js';
-import { checkGuildTagResDto, GuildCodeResDto } from '../dto/res/update-guild-res.dto.js';
+import { Guild, GuildDocument, } from '../schemas/guild.schema';
+import { UpdateGuildNoticeDto, UpdateGuildTagDto } from '../dto/req/update-guild.dto';
+import { checkGuildTagResDto, GuildCodeResDto } from '../dto/res/update-guild-res.dto';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
 
 /**길드 기본 리소스 관리 서비스 */
 @Injectable()

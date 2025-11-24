@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { GUILD_ROLE_ENUM, GuildDocument } from '../../schemas/guild.schema.js';
-import { PopulatedMember } from '#src/guild/interfaces/members.interface.js';
+import { GUILD_ROLE_ENUM, GuildDocument } from '../../schemas/guild.schema';
+import { PopulatedMember } from '../../interfaces/members.interface';
 
 export class GuildMemberResDto {
   @ApiProperty({ description: '유저 object id' })

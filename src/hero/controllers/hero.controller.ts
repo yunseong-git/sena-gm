@@ -1,6 +1,6 @@
-import { Public } from '#src/common/decorators/public.decorators.js';
+import { Public } from '../../common/decorators/public.decorators';
 import { Controller, Get, } from '@nestjs/common';
-import { HeroService } from '../hero.service.js';
+import { HeroService } from '../hero.service';
 
 @Public()
 @Controller('hero')

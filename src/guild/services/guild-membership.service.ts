@@ -3,13 +3,12 @@ import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Connection } from 'mongoose';
 //services
-import { RedisService } from '#src/redis/redis.service.js';
-import { UserService } from '#src/user/services/user.service.js';
-import { UserGuildService } from '#src/user/services/user-guild.service.js';
-//others
-import { Guild, GuildDocument, GUILD_ROLE_ENUM } from '../schemas/guild.schema.js';
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
-import { JoinGuildDto } from '../dto/req/join-guild.dto.js';
+import { JoinGuildDto } from '../dto/req/join-guild.dto';
+import { Guild, GUILD_ROLE_ENUM, GuildDocument } from '../schemas/guild.schema';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
+import { RedisService } from '../../redis/redis.service';
+import { UserGuildService } from '../../user/services/user-guild.service';
+import { UserService } from '../../user/services/user.service';
 
 /**길드 개인별 인원변동 관련 서비스 */
 @Injectable()

@@ -1,8 +1,8 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../decorators/user-roles.decorator.js';
-import { UserPayload } from '#src/auth/interfaces/token-payload.interface.js';
-import { User_Role_Enum } from '#src/user/user.schema.js';
+import { ROLES_KEY } from '../decorators/user-roles.decorator';
+import { UserPayload } from '../../auth/interfaces/token-payload.interface';
+import { User_Role_Enum } from '../../user/schemas/user.schema';
 
 /**UserRole 데코레이터의 역할값과 비교하여 관리자를 "인가"하는가드 */
 @Injectable()

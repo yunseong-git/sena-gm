@@ -1,16 +1,16 @@
 import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { CreateHeroDto } from './dto/create-hero.dto.js';
-import { HeroesData } from './heroes.data.js';
-import { Hero, HeroDocument, RankOrder, TypeOrder } from './schemas/hero.schema.js';
+import { CreateHeroDto } from './dto/create-hero.dto';
+import { HeroesData } from './heroes.data';
+import { Hero, HeroDocument, RankOrder, TypeOrder } from './schemas/hero.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { UpdateHeroDto } from './dto/update-hero.dto.js';
+import { UpdateHeroDto } from './dto/update-hero.dto';
 
 @Injectable()
 export class HeroService {
   constructor(@InjectModel(Hero.name) private heroModel: Model<HeroDocument>) { }
 
-  async seedHeroes(): Promise<{ message: string; count: number }> {
+  async seed(): Promise<{ message: string; count: number }> {
     try {
       await this.heroModel.deleteMany({});
 
