@@ -11,6 +11,7 @@ import { RedisModule } from './redis/redis.module';
 import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RecordModule } from './record/record.module';
 import * as Joi from 'joi';
 
 
@@ -24,10 +25,8 @@ import * as Joi from 'joi';
         MONGO_URI: Joi.string().required(),
         UPSTASH_REDIS_URL: Joi.string().required(),
         JWT_ACCESS_SECRET: Joi.string().required(),
-        JWT_ACCESS_EXPIRATION: Joi.number().required(),
         JWT_REFRESH_SECRET: Joi.string().required(),
         JWT_REGISTER_SECRET: Joi.string().required(),
-        JWT_REFRESH_EXPIRATION: Joi.number().required(),
         BCRYPT_SALT_ROUNDS: Joi.number().required(),
         StatePatchList_TTL: Joi.number().required(),
         GOOGLE_CLIENT_ID: Joi.string().required(),
@@ -51,6 +50,7 @@ import * as Joi from 'joi';
     AuthModule,
     GuildModule,
     RedisModule,
+    RecordModule,
   ],
   controllers: [
     AppController

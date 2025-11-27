@@ -17,6 +17,10 @@ export class User {
   @Prop({ type: String, unique: true, sparse: true })
   email?: string;
 
+  // --- test ---
+  @Prop({ required: true, type: String })
+  password: string;
+
   // --- personal info ---
   @Prop({ required: true, type: String })
   nickname: string;

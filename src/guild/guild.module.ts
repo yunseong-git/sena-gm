@@ -16,6 +16,7 @@ import { GuildPublicController } from './controllers/guild-public.controller';
 import { AuthModule } from '../auth/auth.module';
 import { RedisModule } from '../redis/redis.module';
 import { UserModule } from '../user/user.module';
+import { Counter, CounterSchema } from '../common/schemas/counter.schema';
 
 //modules
 
@@ -23,6 +24,7 @@ import { UserModule } from '../user/user.module';
   imports: [
     MongooseModule.forFeature([
       { name: Guild.name, schema: GuildSchema },
+      { name: Counter.name, schema: CounterSchema }
     ]),
     RedisModule,
     AuthModule,

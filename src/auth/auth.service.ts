@@ -6,6 +6,7 @@ import { TokensWithPayload, AccessTokenWithPayload, RefreshToken } from './inter
 import { RedisService } from '../redis/redis.service';
 import { UserDocument } from '../user/schemas/user.schema';
 import { UserService } from '../user/services/user.service';
+import { JWT_EXPIRATION } from '../common/constatnts/cookie.constant';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +36,7 @@ export class AuthService {
     } else { // Case B: 신규 유저 -> 가입용 임시 토큰 발급
       const registerToken = await this.jwtService.signAsync(
         { googleId: googleUser.googleId, email: googleUser.email },
-        { secret: this.configService.get('JWT_REGISTER_SECRET'), expiresIn: '10m' },
+        { secret: this.configService.get('JWT_REGISTER_SECRET'), expiresIn: JWT_EXPIRATION.REGISTER },
       );
 
       return {
@@ -116,7 +117,7 @@ export class AuthService {
 
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-      expiresIn: '15m',
+      expiresIn: JWT_EXPIRATION.ACCESS,
     });
     return { accessToken, payload };
   }
@@ -129,7 +130,7 @@ export class AuthService {
     }
     const refreshToken = await this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: '7d',
+      expiresIn: JWT_EXPIRATION.REFRESH,
     });
 
     return { refreshToken };

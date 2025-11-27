@@ -6,9 +6,9 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RedisService {
+  private readonly logger = new Logger(RedisService.name);
   constructor(
     @Inject(REDIS_CLIENT) private readonly redis: ioredis.Redis,
-    private readonly logger = new Logger(RedisService.name),
     private readonly configService: ConfigService,
   ) { }
 
