@@ -27,11 +27,4 @@ export class HeroAdminController {
     update(@Param('id', ParseObjectIdPipe) id: string, @Body() updateHeroDto: UpdateHeroDto) {
         return this.heroService.update(id, updateHeroDto);
     }
-
-    @Public()
-    @Post('seed')
-    @HttpCode(HttpStatus.OK)
-    async seedHeroes() {
-        return this.heroService.seed();
-    }
 }

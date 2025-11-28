@@ -53,7 +53,7 @@ export const GuildSchema = SchemaFactory.createForClass(Guild);
 GuildSchema.index({ name: 1, tag: 1 }, { unique: true });
 
 // --- virtual fields ---
-GuildSchema.virtual('fullname').get(function (this: Guild) {
+GuildSchema.virtual('fullName').get(function (this: Guild) {
   return `${this.name}#${this.tag.toString()}`;
 });
 

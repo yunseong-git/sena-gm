@@ -2,6 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 
 // 제네릭을 사용하여 어떤 데이터든 담을 수 있게 만듦
 export class PaginatedResponseDto<T> {
+  @ApiProperty({ isArray: true })
   data: T[]; // 실제 데이터 목록
 
   @ApiProperty({

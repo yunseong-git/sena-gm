@@ -10,6 +10,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { RedisModule } from '../redis/redis.module';
 import { User, UserSchema } from '../user/schemas/user.schema';
 import { UserModule } from '../user/user.module';
+import { AuthTestController } from './auth-test.controller';
 @Module({
   imports: [
     //스키마
@@ -28,7 +29,7 @@ import { UserModule } from '../user/user.module';
       inject: [ConfigService], // ConfigService를 주입합니다.
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, AuthTestController],
   providers: [
     AuthService,
     JwtStrategy,

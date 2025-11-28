@@ -5,5 +5,5 @@ export interface PopulatedMember {
   _id: Types.ObjectId;
   nickname: string;
   tag: string;
-  fullName: string;
+  fullNickName: string;
 }

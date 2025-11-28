@@ -36,7 +36,7 @@ export class GuildMemberResDto {
       userId: memberId,
       nickname: member.nickname,
       tag: member.tag,
-      fullName: member.fullName, // Virtual Field
+      fullName: member.fullNickName, // Virtual Field
       role,
     };
   }

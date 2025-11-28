@@ -108,8 +108,9 @@ export class AuthService {
   /**access token 발급 */
   async issueAccessToken(user: UserDocument)
     : Promise<AccessTokenWithPayload> {
+    console.log('[DEBUG] Token Issue User:', user);
     const payload = {
-      sub: user.id.toString(),
+      sub: user._id.toString(),
       userRole: user.role,
       guildId: user.guildId?.toString() || null,
       guildRole: user.guildRole || null

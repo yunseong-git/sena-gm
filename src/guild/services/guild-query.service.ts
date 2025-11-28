@@ -19,7 +19,7 @@ export class GuildQueryService {
 
   /**기본 길드정보 조회 */
   async getById(user: UserPayload): Promise<SimpleGuildResDto> {
-    const guild = await this.guildModel.findById(user.guildId).select('notice name tag').lean().exec();
+    const guild = await this.guildModel.findById(user.guildId).select('notice name tag').exec();
     if (!guild) throw new NotFoundException('길드를 찾을 수 없습니다.');
 
     return SimpleGuildResDto.from(guild);
@@ -34,13 +34,14 @@ export class GuildQueryService {
         select: 'nickname tag role',
         model: User.name,
       })
-      .lean().exec();
+      .exec();
 
     if (!guild) throw new NotFoundException('길드를 찾을 수 없습니다.');
 
     const members = guild.members as unknown as PopulatedMember[];
 
     const result = members.map(member => GuildMemberResDto.from(member, guild));
+    console.log('결과: ', result)
     return this._sortMembersByRole(result);
   }
 

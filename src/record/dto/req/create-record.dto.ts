@@ -1,6 +1,7 @@
-import { IsArray, IsEnum, IsNumber, IsString, ValidateNested, ArrayMinSize, ArrayMaxSize, Min, Max } from 'class-validator';
+import { IsArray, IsEnum, IsNumber, IsString, ValidateNested, ArrayMinSize, ArrayMaxSize, Min, Max, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ARMOR_MAIN_ENUM, EQUIP_SET_ENUM, EQUIP_SUB_ENUM, RING_ENUM, WEAPON_MAIN_ENUM, } from '../../../common/constatnts/ring.constant';
+import { HERO_SKILL_ENUM } from '../../../hero/schemas/hero.schema';
 
 
 // 1. 스킬 예약 객체
@@ -10,8 +11,8 @@ export class SkillReservationDto {
   heroIndex: number;
 
   @IsString()
-  @IsEnum(['S1', 'S2']) // 스킬 타입 제한
-  skillType: 'S1' | 'S2';
+  @IsIn([HERO_SKILL_ENUM.SKILL_1, HERO_SKILL_ENUM.SKILL_2])
+  skillType: string;
 }
 
 // 2. 영웅 세팅 (1명)

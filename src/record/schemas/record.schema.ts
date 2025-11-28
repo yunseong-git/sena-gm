@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Query, Types } from "mongoose";
 import { ARMOR_MAIN_ENUM, EQUIP_SET_ENUM, EQUIP_SUB_ENUM, RING_ENUM, WEAPON_MAIN_ENUM } from "../../common/constatnts/ring.constant";
+import { HERO_SKILL_ENUM } from "../../hero/schemas/hero.schema";
 
 // ---------------------------------------------------------
 // HeroSet (영웅 1명의 세팅 스냅샷) - _id 불필요
@@ -51,7 +52,7 @@ export class DeckSet {
   @Prop({
     type: [{
       heroIndex: { type: Number, required: true, min: 0, max: 2 },
-      skillType: { type: String, required: true, enum: ['S1', 'S2'] }
+      skillType: { type: String, required: true, enum: [HERO_SKILL_ENUM.SKILL_1, HERO_SKILL_ENUM.SKILL_2] }
     }],
     validate: [arrayLimit, '{PATH} exceeds the limit of 3'] // (선택) 최대 3개 제한
   })

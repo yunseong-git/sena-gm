@@ -102,6 +102,8 @@ export class AuthController {
   async getProfile(@User() user: UserPayloadDto)
     : Promise<AuthResponseDto> {
 
+    console.log('[DEBUG] 프로필 유저:', user);
+
     //매핑 로직 (ObjectId -> string)
     const jwtPayload: JwtPayloadDto = {
       sub: user.id.toString(),
@@ -110,6 +112,7 @@ export class AuthController {
       guildRole: user.guildRole || null,
     };
 
+    console.log('[DEBUG] 페이로드 결과:', user);
     return { payload: jwtPayload };
   }
 

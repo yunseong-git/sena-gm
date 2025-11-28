@@ -1,5 +1,5 @@
 import { Public } from '../../common/decorators/public.decorators';
-import { Controller, Get, } from '@nestjs/common';
+import { Controller, Get, Post, } from '@nestjs/common';
 import { HeroService } from '../hero.service';
 
 @Public()
@@ -10,5 +10,10 @@ export class HeroController {
   @Get()
   async findAll() {
     return await this.heroService.findAll();
+  }
+
+  @Post('seed')
+  async seedHeroes() {
+    return await this.heroService.seed();
   }
 }
