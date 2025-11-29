@@ -30,7 +30,7 @@ export class GuildResourceService {
     /** 태그 변경 (중복 체크 포함) */
     async updateTag(user: UserPayload, dto: UpdateGuildTagDto): Promise<void> {
         const isDuplicated = await this.checkTagDuplicate(user, dto.tag);
-        if (isDuplicated) throw new ConflictException('이미 존재하는 태그입니다. 다시 시도해주세요.');
+        if (!isDuplicated) throw new ConflictException('이미 존재하는 태그입니다. 다시 시도해주세요.');
         try {
             await this.guildModel.updateOne(
                 { _id: user.guildId },
